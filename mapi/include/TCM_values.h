@@ -58,6 +58,58 @@ struct TypeTCM {
                 resetSystem     : 1,  //│
                 PMstatusChanged :20;  //┘
     } act;
+    struct TempValues {
+        unsigned int actualValues: 32;
+                unsigned int boardTemp:    16;
+                unsigned int boardType:    16;
+                int delayA:                16;
+                int delayC:                16;
+                int delayLaser:            32;
+                int mainPanel:             16;
+                int trigger1rand:          32;
+                int trigger1sign:          16;
+                int trigger1cnt:           32;
+                int trigger2rand:          32;
+                int trigger2sign:          16;
+                int trigger2cnt:           32;
+                int trigger3rand:          32;
+                int trigger3sign:          16;
+                int trigger3cnt:           32;
+                int trigger4rand:          32;
+                int trigger4sign:          16;
+                int trigger4cnt:           32;
+                int trigger5rand:          32;
+                int trigger5sign:          16;
+                int trigger5cnt:           32;
+                int triggers:              16;
+                long long pmA0Status:      64;
+                long long pmA1Status:      64;
+                long long pmA2Status:      64;
+                long long pmA3Status:      64;
+                long long pmA4Status:      64;
+                long long pmA5Status:      64;
+                long long pmA6Status:      64;
+                long long pmA7Status:      64;
+                long long pmA8Status:      64;
+                long long pmA9Status:      64;
+                long long pmC0Status:      64;
+                long long pmC1Status:      64;
+                long long pmC2Status:      64;
+                long long pmC3Status:      64;
+                long long pmC4Status:      64;
+                long long pmC5Status:      64;
+                long long pmC6Status:      64;
+                long long pmC7Status:      64;
+                long long pmC8Status:      64;
+                long long pmC9Status:      64;
+                int vtimeLow:              32;
+                int vtimeHigh:             32;
+                int scLevelA:              32;
+                int scLevelC:              32;
+                int cLevelA:               32;
+                int cLevelC:               32;
+                long long mainPanelBits:   64;
+    } temp;
 };
 
 extern TypeTCM tcm;

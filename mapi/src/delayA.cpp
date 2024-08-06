@@ -8,13 +8,13 @@
 #include "TCM_values.h"
 
 
-DelayA::DelayA() {
+/*DelayA::DelayA() {
   finalValue = 0;
 }
 
 string DelayA::processInputMessage(string input) {
 
-  sequence = "0x0001114440000000000,write\nread";
+  sequence = "reset\n0x0000000000000000000,write\nread";
   return sequence;
 }
 
@@ -22,12 +22,16 @@ string DelayA::processOutputMessage(string output) {
   string value;
 
   try {
+    Print::PrintInfo(output);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoi(value, nullptr, 16);
     float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
     float halfBC_ns = 500. / systemClock_MHz;
-    float phaseStep_ns = halfBC_ns / /*(SERIAL_NUM ? */1024/* : 1280)*/;
+    float phaseStep_ns = halfBC_ns / 
+    //(SERIAL_NUM ? 
+    1024 : 
+    //1280);
     finalValue = finalValue*phaseStep_ns;
   }
   catch (exception &e) {
@@ -36,4 +40,42 @@ string DelayA::processOutputMessage(string output) {
   }
 
   return to_string(finalValue);
+}*/
+
+
+DelayA::DelayA() : IndefiniteMapi::IndefiniteMapi()
+{}
+
+
+DelayA::~DelayA(){}
+
+void DelayA::processExecution(){
+    bool running;
+    string response;
+
+    string request = this->waitForRequest(running);
+    if (!running){
+        return;
+    }
+
+    if (request == ""){
+      int delayATemp = tcm.temp.delayA;
+      float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+      float halfBC_ns = 500. / systemClock_MHz;
+      float phaseStep_ns = halfBC_ns / /*(SERIAL_NUM ? */1024 /*: 1280)*/;
+      float finalValue = delayATemp*phaseStep_ns;
+      this->publishAnswer(std::to_string(finalValue));
+    }
+    else if (request == "error"){
+        this->publishError("Error!");
+    }
+    else{
+
+        //response = this->executeAlfSequence("read\n0x00000170,0x80000000"); // execute desired sequence to alf, waits for response from ALF
+        //this->publishAnswer(response);
+
+        //response = this->executeAlfSequence("read\n0x00000180,0x80000000"); // It is possible to execute multiple sequences to ALF with one command from WinCC
+        //this->publishAnswer(response);
+    }
 }
+

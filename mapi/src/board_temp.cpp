@@ -8,13 +8,13 @@
 #include "TCM_values.h"
 
 
-BoardTemp::BoardTemp() {
+/*BoardTemp::BoardTemp() {
   finalValue = 0;
 }
 
 string BoardTemp::processInputMessage(string input) {
 
-  sequence = "0x0001117770000000000,write\nread";
+  sequence = "reset\n0x0000000000500000000,write\nread";
   return sequence;
 }
 
@@ -22,6 +22,7 @@ string BoardTemp::processOutputMessage(string output) {
   string value;
 
   try {
+    Print::PrintInfo(output);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 4, output.size());
     finalValue = stoi(value, nullptr, 16);
@@ -34,3 +35,36 @@ string BoardTemp::processOutputMessage(string output) {
 
   return to_string(finalValue);
 }
+*/
+
+BoardTemp::BoardTemp() : IndefiniteMapi::IndefiniteMapi()
+{}
+
+BoardTemp::~BoardTemp(){}
+
+void BoardTemp::processExecution(){
+    bool running;
+    string response;
+
+    string request = this->waitForRequest(running);
+    if (!running){
+        return;
+    }
+
+    if (request == ""){
+      int boardTemp = tcm.temp.boardTemp;
+      float finalValue = boardTemp/10.;
+      this->publishAnswer(std::to_string(finalValue));
+    }
+    else if (request == "error"){
+        this->publishError("Error!");
+    }
+    else{
+        //response = this->executeAlfSequence("read\n0x00000170,0x80000000"); // execute desired sequence to alf, waits for response from ALF
+        //this->publishAnswer(response);
+
+        //response = this->executeAlfSequence("read\n0x00000180,0x80000000"); // It is possible to execute multiple sequences to ALF with one command from WinCC
+        //this->publishAnswer(response);
+    }
+}
+

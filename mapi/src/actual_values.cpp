@@ -9,13 +9,12 @@
 #include <sstream>
 #include <iomanip>
 
-
-ActualValues::ActualValues() {
+/*ActualValues::ActualValues() {
   finalValue = 0;
 }
 
 string ActualValues::processInputMessage(string input) {
-  sequence = "0x0001110000000000000,write\nread";
+  sequence = "reset\n0x0000000000F00000000,write\nread";
   return sequence;
 }
 
@@ -46,4 +45,52 @@ string ActualValues::processOutputMessage(string output) {
   }
 
   return value;
+}*/
+
+ActualValues::ActualValues() : IndefiniteMapi::IndefiniteMapi()
+{}
+
+ActualValues::~ActualValues()
+{}
+
+void ActualValues::processExecution(){
+    bool running;
+    string response;
+
+    string request = this->waitForRequest(running);
+    if (!running){
+        return;
+    }
+
+    if (request == ""){
+      std::stringstream stream;
+      stream << std::hex << tcm.temp.actualValues;
+      std::string value = "0x"+stream.str();
+      int finalValue = tcm.temp.actualValues;
+      int pllLockC = (finalValue)&1;
+      int pllLockA = (finalValue>>1)&1;
+      int systemRestarted = (finalValue>>2)&1;
+      int clockSrc = (finalValue>>3)&1;
+      int RxReady = (finalValue>>4)&1;
+      tcm.act.PLLlockA=pllLockA;
+      tcm.act.PLLlockC=pllLockC;
+      tcm.act.systemRestarted=systemRestarted;
+      tcm.act.externalClock=clockSrc;
+      tcm.act.GBTRxReady=RxReady;
+      this->publishAnswer(value);
+    }
+    else if (request == "error")
+    {
+        this->publishError("Error!");
+    }
+    else
+    {
+
+        //response = this->executeAlfSequence("read\n0x00000170,0x80000000"); // execute desired sequence to alf, waits for response from ALF
+        //this->publishAnswer(response);
+
+        //response = this->executeAlfSequence("read\n0x00000180,0x80000000"); // It is possible to execute multiple sequences to ALF with one command from WinCC
+        //this->publishAnswer(response);
+    }
 }
+

@@ -12,7 +12,7 @@ WorkStatus::WorkStatus() {
 
 string WorkStatus::processInputMessage(string input) {
 
-  sequence = "0x0001000000000000000,write\nread";
+  sequence = "0x0000000000000000000,write\nread";
   return sequence;
 }
 
@@ -20,9 +20,10 @@ string WorkStatus::processOutputMessage(string output) {
   string value;
 
   try {
+    Print::PrintInfo(output);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
-    value = output.substr(output.size() - 3, output.size());
-    status = stoi(value, nullptr, 16);
+    //value = output.substr(output.size() - 3, output.size());
+    status = 1;
   }
   catch (exception &e) {
     Print::PrintError("ERROR in connection with ALF!");

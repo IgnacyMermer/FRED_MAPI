@@ -1,27 +1,28 @@
 /*#include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
-class DelayC: public Iterativemapi
+class Triggers: public Iterativemapi
 {
 public:
-    DelayC();
+    Triggers();
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
-    float finalValue;
+    int finalValue;
     string sequence;
 };*/
 
+
 #include "Fred/Mapi/indefinitemapi.h"
 
-class DelayC: public IndefiniteMapi
+class Triggers: public IndefiniteMapi
 {
 private:
 	void processExecution();
 
 public:
-	DelayC();
-	virtual ~DelayC();
+	Triggers();
+	virtual ~Triggers();
 };
 
