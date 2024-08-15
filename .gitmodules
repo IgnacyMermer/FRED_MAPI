@@ -1,0 +1,4 @@
+[submodule "core"]
+	path = core
+	url = https://gitlab.cern.ch/alialfred/FREDServer.git
+	branch = FRED_submodule

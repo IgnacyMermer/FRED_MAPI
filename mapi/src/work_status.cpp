@@ -20,6 +20,7 @@ string WorkStatus::processOutputMessage(string output) {
   string value;
 
   try {
+    Print::PrintInfo("Work status");
     Print::PrintInfo(output);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     //value = output.substr(output.size() - 3, output.size());

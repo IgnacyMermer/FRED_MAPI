@@ -119,6 +119,6 @@ void TriggerRand::processExecution(){
         }
 
         std::string response = this->executeAlfSequence(sequence);
-        
+
     }
 }

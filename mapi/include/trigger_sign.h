@@ -1,4 +1,4 @@
-/*#include "Fred/Mapi/mapi.h"
+#include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
 class TriggerSign: public Iterativemapi
@@ -11,9 +11,9 @@ public:
 
     int finalValue;
     string sequence, triggerEndpoint;
-};*/
+};
 
-#include "Fred/Mapi/indefinitemapi.h"
+/*#include "Fred/Mapi/indefinitemapi.h"
 
 class TriggerSign: public IndefiniteMapi
 {
@@ -25,4 +25,4 @@ public:
 	virtual ~TriggerSign();
 
     std::string triggerEndpoint;
-};
+};*/

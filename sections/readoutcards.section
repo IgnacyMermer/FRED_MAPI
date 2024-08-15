@@ -3,6 +3,6 @@ READOUTCARDS = {
      	PATH = ../boards/readoutcards/readoutcards.conf
      }
      MAPPING = {
-        FIT[0] = ALF_42/SERIAL_0/LINK_0
+        TCM[0] = ALF_42/SERIAL_0/LINK_0
      }
 }

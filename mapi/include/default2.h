@@ -1,14 +1,14 @@
 #include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
-class PM_status: public Iterativemapi
+class Default2: public Iterativemapi
 {
 public:
-    PM_status(std::string endpointParam);
+    Default2(std::string endpointParam);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
     long long finalValue;
-    string sequence, pmEndpoint;
+    string sequence, endpoint;
 };

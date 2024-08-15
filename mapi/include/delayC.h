@@ -1,4 +1,4 @@
-/*#include "Fred/Mapi/mapi.h"
+#include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
 class DelayC: public Iterativemapi
@@ -11,9 +11,9 @@ public:
 
     float finalValue;
     string sequence;
-};*/
+};
 
-#include "Fred/Mapi/indefinitemapi.h"
+/*#include "Fred/Mapi/indefinitemapi.h"
 
 class DelayC: public IndefiniteMapi
 {
@@ -24,4 +24,4 @@ public:
 	DelayC();
 	virtual ~DelayC();
 };
-
+*/

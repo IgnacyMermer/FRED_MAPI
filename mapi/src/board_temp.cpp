@@ -8,13 +8,20 @@
 #include "TCM_values.h"
 
 
-/*BoardTemp::BoardTemp() {
+BoardTemp::BoardTemp() {
   finalValue = 0;
 }
 
 string BoardTemp::processInputMessage(string input) {
+  vector<string> parameters = Utility::splitString(input, ",");
 
-  sequence = "reset\n0x0000000000500000000,write\nread";
+  if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+    sequence = "reset\n0x0000000000500000000,write\nread";
+  }
+  else{
+    sequence="";
+    this->publishError("Readonly parameter");
+  }
   return sequence;
 }
 
@@ -22,7 +29,6 @@ string BoardTemp::processOutputMessage(string output) {
   string value;
 
   try {
-    Print::PrintInfo(output);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 4, output.size());
     finalValue = stoi(value, nullptr, 16);
@@ -35,9 +41,9 @@ string BoardTemp::processOutputMessage(string output) {
 
   return to_string(finalValue);
 }
-*/
 
-BoardTemp::BoardTemp() : IndefiniteMapi::IndefiniteMapi()
+
+/*BoardTemp::BoardTemp() : IndefiniteMapi::IndefiniteMapi()
 {}
 
 BoardTemp::~BoardTemp(){}
@@ -66,5 +72,5 @@ void BoardTemp::processExecution(){
         //response = this->executeAlfSequence("read\n0x00000180,0x80000000"); // It is possible to execute multiple sequences to ALF with one command from WinCC
         //this->publishAnswer(response);
     }
-}
+}*/
 

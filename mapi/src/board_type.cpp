@@ -10,13 +10,21 @@
 #include <iomanip>
 
 
-/*BoardType::BoardType() {
+BoardType::BoardType() {
   finalValue = 0;
 }
 
 string BoardType::processInputMessage(string input) {
+  
+  vector<string> parameters = Utility::splitString(input, ",");
 
-  sequence = "reset\n0x0000000000700000000,write\nread";
+  if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+    sequence = "reset\n0x0000000000700000000,write\nread";
+  }
+  else{
+    sequence="";
+    this->publishError("Readonly parameter");
+  }
   return sequence;
 }
 
@@ -38,10 +46,10 @@ string BoardType::processOutputMessage(string output) {
     finalValue=0;
   }
 
-  return output;
+  return value;
 }
-*/
 
+/*
 
 BoardType::BoardType() : IndefiniteMapi::IndefiniteMapi()
 {}
@@ -81,3 +89,4 @@ void BoardType::processExecution(){
     }
 }
 
+*/

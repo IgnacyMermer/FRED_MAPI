@@ -1,7 +1,7 @@
 #include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
-/*class BoardType: public Iterativemapi
+class BoardType: public Iterativemapi
 {
 public:
     BoardType();
@@ -11,9 +11,9 @@ public:
 
     int finalValue;
     string sequence;
-};*/
+};
 
-#include "Fred/Mapi/indefinitemapi.h"
+/*#include "Fred/Mapi/indefinitemapi.h"
 
 class BoardType: public IndefiniteMapi
 {
@@ -24,3 +24,4 @@ public:
 	BoardType();
 	virtual ~BoardType();
 };
+*/

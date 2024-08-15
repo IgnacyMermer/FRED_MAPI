@@ -1,4 +1,4 @@
-/*#include "Fred/Mapi/mapi.h"
+#include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
 class BoardTemp: public Iterativemapi
@@ -11,9 +11,9 @@ public:
 
     float finalValue;
     string sequence;
-};*/
+};
 
-#include "Fred/Mapi/indefinitemapi.h"
+/*#include "Fred/Mapi/indefinitemapi.h"
 
 class BoardTemp: public IndefiniteMapi
 {
@@ -23,4 +23,4 @@ private:
 public:
 	BoardTemp();
 	virtual ~BoardTemp();
-};
+};*/

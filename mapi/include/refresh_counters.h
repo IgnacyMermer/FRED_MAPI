@@ -1,26 +1,15 @@
 #include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
-class DelayA: public Iterativemapi
+class RefreshCounters: public Iterativemapi
 {
 public:
-    DelayA();
+    RefreshCounters();
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
     float finalValue;
+    bool firstTime;
     string sequence;
 };
-
-/*#include "Fred/Mapi/indefinitemapi.h"
-
-class DelayA: public IndefiniteMapi
-{
-private:
-	void processExecution();
-
-public:
-	DelayA();
-	virtual ~DelayA();
-};*/

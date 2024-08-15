@@ -1,0 +1,28 @@
+image: gitlab-registry.cern.ch/alialfred/fredserver:latest
+
+stages:
+  - build
+  - parser
+
+build:
+  stage: build
+  script:
+    - git clone https://$bot_name:$bot_pwd@gitlab.cern.ch/alialfred/FREDServer.git core # Clone core FREDServer module
+    - cd core
+    - yum install -y libaio
+    - source scl_source enable devtoolset-7 || true
+    - if [ -e /mapi/src/mapifactory.cpp ]; then cmake3 . -DMAPI=1; else cmake3 .; fi #If mapifactory.cpp exists, use flag -DMAPI=1
+    - make all
+    - cd ..
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - ./bin/FREDServer
+      - ./core/*
+
+  
+parser:
+  stage: parser
+  script:
+    - yum install -y libaio
+    - ./bin/FREDServer --p

@@ -1,4 +1,4 @@
-/*#include "Fred/Mapi/mapi.h"
+#include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/iterativemapi.h"
 
 class ActualValues: public Iterativemapi
@@ -11,9 +11,9 @@ public:
 
     int finalValue;
     string sequence;
-};*/
+};
 
-#include "Fred/Mapi/indefinitemapi.h"
+/*#include "Fred/Mapi/indefinitemapi.h"
 
 class ActualValues: public IndefiniteMapi
 {
@@ -25,3 +25,4 @@ public:
 	virtual ~ActualValues();
 };
 
+*/
