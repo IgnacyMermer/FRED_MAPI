@@ -72,6 +72,7 @@ string Default2::processInputMessage(string input) {
             sequence="";
         }
         return sequence;
+        
     }
     else if(endpoint=="SC_LEVEL_A"){
         address="0000000A";
@@ -214,6 +215,8 @@ string Default2::processInputMessage(string input) {
             this->publishError("Parameter can be only read or write");
             sequence="";
         }
+        Print::PrintInfo("sekwencja");
+        Print::PrintInfo(sequence);
         return sequence;
     }
     else if(endpoint=="ATTENUATOR"){
@@ -585,6 +588,8 @@ string Default2::processInputMessage(string input) {
         }
     }
     else if(endpoint=="MODE_SETTINGS"){
+        Print::PrintInfo("mode settings");
+        Print::PrintInfo(input);
         address="000000D8";
         std::string hex_str = "";
         int index = std::stoi(parameters[0]);
@@ -628,7 +633,7 @@ string Default2::processInputMessage(string input) {
                 data2+="0";
             }
             data2+=hex_str;
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread";
+            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>2&&(index>=4&&index<=7)){
             int numValue = std::stoi(parameters[2]);
@@ -655,7 +660,7 @@ string Default2::processInputMessage(string input) {
                 data2+="0";
             }
             data2+=hex_str;
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread";
+            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>2&&(index>=16&&index<=19)){
             int numValue = std::stoi(parameters[2]);
@@ -682,7 +687,7 @@ string Default2::processInputMessage(string input) {
                 data2+="0";
             }
             data2+=hex_str;
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread";
+            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
             int num = std::stoi(parameters[0]);
@@ -695,7 +700,7 @@ string Default2::processInputMessage(string input) {
                 data+="0";
             }
             data+=hex_str;
-            sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread";
+            sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
             int num = std::stoi(parameters[0]);
@@ -704,7 +709,7 @@ string Default2::processInputMessage(string input) {
             std::stringstream ss;
             ss << std::hex << temp;
             std::string data = ss.str();
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread";
+            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
         }
     }
     else if(endpoint=="LASER_DIVIDER"){
@@ -789,7 +794,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = std::stoi(parameters[0]);
+            int num = 0;
+            if(parameters[0].rfind("0x", 0)==0){
+                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+            }
+            else{
+                num = std::stoi(parameters[0]);
+            }
             std::stringstream ss;
             ss << std::hex << num;
             std::string hex_str = ss.str();
@@ -812,7 +823,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = std::stoi(parameters[0]);
+            int num = 0;
+            if(parameters[0].rfind("0x", 0)==0){
+                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+            }
+            else{
+                num = std::stoi(parameters[0]);
+            }
             std::stringstream ss;
             ss << std::hex << num;
             std::string hex_str = ss.str();
@@ -835,7 +852,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = std::stoi(parameters[0]);
+            int num = 0;
+            if(parameters[0].rfind("0x", 0)==0){
+                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+            }
+            else{
+                num = std::stoi(parameters[0]);
+            }
             std::stringstream ss;
             ss << std::hex << num;
             std::string hex_str = ss.str();
@@ -1219,12 +1242,18 @@ string Default2::processInputMessage(string input) {
     }
     else if(endpoint=="EMULATION_RATE"){
         address="000000DF";
-        int index = std::stoi(parameters[0]);
+        int indexTemp = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = std::stoi(parameters[0]);
+            int num = 0;
+            if(parameters[0].rfind("0x", 0)==0){
+                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+            }
+            else{
+                num = std::stoi(parameters[0]);
+            }
             std::stringstream ss;
             ss << std::hex << num;
             std::string hex_str = ss.str();
@@ -1235,8 +1264,14 @@ string Default2::processInputMessage(string input) {
             data+=hex_str;
             sequence="reset\n0x001"+address+data+",write\nread";
         }
-        else if(parameters.size()>2&&(index>=0&&index<=15)){
-            int numValue = std::stoi(parameters[2]);
+        else if(parameters.size()>2&&(indexTemp>=0&&indexTemp<=15)){
+            int numValue = 0;
+            if(parameters[2].rfind("0x", 0)==0){
+                numValue = std::stoi(parameters[2].substr(2), nullptr, 16);
+            }
+            else{
+                numValue = std::stoi(parameters[2]);
+            }
             int temp = 0xFFFF0000;
             std::stringstream ss;
             ss << std::hex << temp;
@@ -1257,8 +1292,15 @@ string Default2::processInputMessage(string input) {
             data2+=hex_str;
             sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread";
         }
-        else if(parameters.size()>2&&(index>=16&&index<=31)){
-            int numValue = std::stoi(parameters[2]);
+        else if(parameters.size()>2&&(indexTemp>=16&&indexTemp<=31)){
+            int numValue = 0;
+            if(parameters[2].rfind("0x", 0)==0){
+                numValue = std::stoi(parameters[2].substr(2), nullptr, 16);
+            }
+            else{
+                numValue = std::stoi(parameters[2]);
+            }
+            
             int temp = 0x0000FFFF;
             std::stringstream ss;
             ss << std::hex << temp;
@@ -1500,6 +1542,64 @@ string Default2::processInputMessage(string input) {
         }
         else{
             this->publishError("Value not to set");
+            sequence="";
+        }
+        return sequence;
+    }
+    else if(endpoint=="LASER_PATTERN_1"){
+        address="0000001C";
+        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        }
+        else if(parameters.size()>1&&parameters[1]=="1"){
+            int num = 0;
+            if(parameters[0].rfind("0x", 0)==0){
+                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+            }
+            else{
+                num = std::stoi(parameters[0]);
+            }
+            std::stringstream ss;
+            ss << std::hex << num;
+            std::string hex_str = ss.str();
+            std::string data="";
+            for(int i=0; i<8-hex_str.length(); i++){
+                data+="0";
+            }
+            data+=hex_str;
+            sequence="reset\n0x001"+address+data+",write\nread";
+        }
+        else{
+            this->publishError("wrong parameters");
+            sequence="";
+        }
+        return sequence;
+    }
+    else if(endpoint=="LASER_PATTERN_0"){
+        address="0000001D";
+        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        }
+        else if(parameters.size()>1&&parameters[1]=="1"){
+            int num = 0;
+            if(parameters[0].rfind("0x", 0)==0){
+                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+            }
+            else{
+                num = std::stoi(parameters[0]);
+            }
+            std::stringstream ss;
+            ss << std::hex << num;
+            std::string hex_str = ss.str();
+            std::string data="";
+            for(int i=0; i<8-hex_str.length(); i++){
+                data+="0";
+            }
+            data+=hex_str;
+            sequence="reset\n0x001"+address+data+",write\nread";
+        }
+        else{
+            this->publishError("wrong parameters");
             sequence="";
         }
         return sequence;

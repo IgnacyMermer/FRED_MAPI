@@ -25,7 +25,7 @@ string ActualValues::processInputMessage(string input) {
         sequence = "reset\n0x0010000000F00000C00,write\nread";
       }
       else{
-        sequence = "reset\n0x0010000000F00000200,write\nread";
+        sequence = "reset\n0x0010000000F00000800,write\nread";
       }
     }
     else{

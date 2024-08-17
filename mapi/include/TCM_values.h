@@ -191,6 +191,8 @@ struct TypeTCM {
                 long long bkgrnd7Rate:    64;
                 long long bkgrnd8Rate:    64;
                 long long bkgrnd9Rate:    64;
+                long long laserPattern1:  64;
+                long long laserPattern0:  64;
                 
     } temp;
 };
