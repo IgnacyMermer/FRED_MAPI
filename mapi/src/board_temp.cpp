@@ -32,6 +32,7 @@ string BoardTemp::processOutputMessage(string output) {
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 4, output.size());
     finalValue = stoi(value, nullptr, 16);
+    Print::PrintInfo("temperatire"+std::to_string(finalValue));
     finalValue = finalValue/10.;
   }
   catch (exception &e) {

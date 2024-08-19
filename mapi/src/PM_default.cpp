@@ -20,7 +20,7 @@ string PM_default::processInputMessage(string input) {
     std::string address="", sequence="";
     vector<string> parameters = Utility::splitString(input, ",");
     if(endpoint=="TRG_SETTINGS"){
-        address="00000"+pmNumber+"00";
+        address="0000"+pmNumber+"00";
         int index = -1;
         try{
             index=std::stoi(parameters[0]);
