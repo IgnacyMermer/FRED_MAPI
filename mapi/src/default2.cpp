@@ -27,6 +27,7 @@ string Default2::processInputMessage(string input) {
         else if(parameters.size()>1&&parameters[1]=="1"){
             int num = std::stoi(parameters[0].substr(2));
             if(num<-512||num>511){
+                noRpcRequest=true;
                 this->publishError("Value out of correct range");
                 return "";
             }
@@ -41,6 +42,7 @@ string Default2::processInputMessage(string input) {
             sequence="reset\n0x001"+address+data+",write\nread";
         }
         else{
+            noRpcRequest=true;
             this->publishError("Parameter can be only read or write");
             sequence="";
         }
@@ -54,6 +56,7 @@ string Default2::processInputMessage(string input) {
         else if(parameters.size()>1&&parameters[1]=="1"){
             int num = std::stoi(parameters[0].substr(2));
             if(num<-512||num>511){
+                noRpcRequest=true;
                 this->publishError("Value out of correct range");
                 return "";
             }
@@ -70,6 +73,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
         
@@ -82,6 +86,7 @@ string Default2::processInputMessage(string input) {
         else if(parameters.size()>1&&parameters[1]=="1"){
             int num = std::stoi(parameters[0].substr(2));
             if(num<0||num>65535){
+                noRpcRequest=true;
                 this->publishError("Value out of correct range");
                 return "";
             }
@@ -98,6 +103,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -110,6 +116,7 @@ string Default2::processInputMessage(string input) {
             int num = std::stoi(parameters[0].substr(2));
             if(num<0||num>65535){
                 this->publishError("Value out of correct range");
+                noRpcRequest=true;
                 return "";
             }
             std::stringstream ss;
@@ -125,6 +132,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -137,6 +145,7 @@ string Default2::processInputMessage(string input) {
             int num = std::stoi(parameters[0].substr(2));
             if(num<0||num>65535){
                 this->publishError("Value out of correct range");
+                noRpcRequest=true;
                 return "";
             }
             std::stringstream ss;
@@ -152,6 +161,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -164,6 +174,7 @@ string Default2::processInputMessage(string input) {
             int num = std::stoi(parameters[0].substr(2));
             if(num<0||num>65535){
                 this->publishError("Value out of correct range");
+                noRpcRequest=true;
                 return "";
             }
             std::stringstream ss;
@@ -179,6 +190,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -199,10 +211,12 @@ string Default2::processInputMessage(string input) {
             num = num / phaseStep_ns;
             if(num<-1024||num>1024){
                 this->publishError("Value out of correct range");
+                noRpcRequest=true;
                 return "";
             }
             std::stringstream ss;
-            ss << std::hex << num;
+            int numInt = num;
+            ss << std::hex << numInt;
             std::string hex_str = ss.str();
             std::string data="";
             for(int i=0; i<8-hex_str.length(); i++){
@@ -214,9 +228,8 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write");
             sequence="";
+            noRpcRequest=true;
         }
-        Print::PrintInfo("sekwencja");
-        Print::PrintInfo(sequence);
         return sequence;
     }
     else if(endpoint=="ATTENUATOR"){
@@ -238,54 +251,12 @@ string Default2::processInputMessage(string input) {
             data+=hex_str;
             sequence="reset\n0x001"+address+data+",write\nread";
         }
-        else if(parameters.size()>2&&(index>=0&&index<=13)){
-            int numValue = std::stoi(parameters[2]);
-            if(numValue<0||numValue>12000){
-                this->publishError("steps out of range");
-                return "";
-            }
-            int temp = 0xFFFFF000;
-            std::stringstream ss;
-            ss << std::hex << temp;
-            hex_str = ss.str();
-            std::string data="";
-            for(int i=0; i<8-hex_str.length(); i++){
-                data+="0";
-            }
-            data+=hex_str;
-            temp=numValue;
-            std::stringstream ss2;
-            ss2 << std::hex << temp;
-            std::string data2 = "";
-            hex_str = ss2.str();
-            for(int i=0; i<8-hex_str.length(); i++){
-                data2+="0";
-            }
-            data2+=hex_str;
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread";
+        else{
+            this->publishError("wrong parameters");
+            sequence = "";
+            noRpcRequest=true;
         }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            int num = std::stoi(parameters[0]);
-            std::string data="";
-            std::stringstream ss;
-            ss << std::hex << (1 << num);
-            hex_str = ss.str();
-
-            for(int i=0; i<8-hex_str.length(); i++){
-                data+="0";
-            }
-            data+=hex_str;
-            sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            int num = std::stoi(parameters[0]);
-            int temp = 0xFFFFFFFF;
-            temp-=(1 << num);
-            std::stringstream ss;
-            ss << std::hex << temp;
-            std::string data = ss.str();
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread";
-        }
+        return sequence;
     }
     else if(endpoint=="EXT_SW"){
         address="00000004";
@@ -328,6 +299,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or write or RMW");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -339,6 +311,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
+            noRpcRequest=true;
             sequence="";
             this->publishError("Readonly parameter");
         }
@@ -445,6 +418,11 @@ string Default2::processInputMessage(string input) {
             std::string data = ss.str();
             sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
         }
+        else{
+            this->publishError("wrong parameters");
+            noRpcRequest=true;
+            sequence="";
+        }
         return sequence;
     }
     else if(endpoint=="MODES_STATUS"){
@@ -456,8 +434,10 @@ string Default2::processInputMessage(string input) {
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="SIDE_A_STATUS"){
         address="0000001A";
@@ -501,7 +481,9 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or RMW");
             sequence="";
+            noRpcRequest=true;
         }
+        return sequence;
     }
     else if(endpoint=="SIDE_C_STATUS"){
         address="0000003A";
@@ -533,7 +515,9 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Parameter can be only read or RMW");
             sequence="";
+            noRpcRequest=true;
         }
+        return sequence;
     }
     else if(endpoint=="BKGRND0_CNT"){
         address="00000075";
@@ -573,43 +557,54 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
+            noRpcRequest=true;
             sequence="";
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="1VPOWER"){
         address="000000FD";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
             this->publishError("Readonly parameter");
+            noRpcRequest=true;
         }
+        return sequence;
     }
     else if(endpoint=="18VPOWER"){
         address="000000FE";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="MODE_SETTINGS"){
         address="000000D8";
         std::string hex_str = "";
-        int index = std::stoi(parameters[0]);
+        int num = 0;
+        if(parameters[0].rfind("0x", 0)==0){
+            num = std::stoi(parameters[0].substr(2), nullptr, 16);
+        }
+        else{
+            num = std::stoi(parameters[0]);
+        }
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = std::stoi(parameters[0]);
+            //int num = std::stoi(parameters[0]);
+            Print::PrintInfo(std::to_string(num));
             std::stringstream ss;
             ss << std::hex << num;
             std::string hex_str = ss.str();
@@ -620,7 +615,7 @@ string Default2::processInputMessage(string input) {
             data+=hex_str;
             sequence="reset\n0x001"+address+data+",write\nread";
         }
-        else if(parameters.size()>2&&(index>=0&&index<=3)){
+        else if(parameters.size()>2&&(num>=0&&num<=3)){
             int numValue = std::stoi(parameters[2]);
             if(numValue<0||numValue>2){
                 this->publishError("dg mode out of range");
@@ -646,7 +641,7 @@ string Default2::processInputMessage(string input) {
             data2+=hex_str;
             sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
         }
-        else if(parameters.size()>2&&(index>=4&&index<=7)){
+        else if(parameters.size()>2&&(num>=4&&num<=7)){
             int numValue = std::stoi(parameters[2]);
             if(numValue<0||numValue>2){
                 this->publishError("tg mode out of range");
@@ -672,7 +667,7 @@ string Default2::processInputMessage(string input) {
             data2+=hex_str;
             sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
         }
-        else if(parameters.size()>2&&(index>=16&&index<=19)){
+        else if(parameters.size()>2&&(num>=16&&num<=19)){
             int numValue = std::stoi(parameters[2]);
             if(numValue<0||numValue>2){
                 this->publishError("CTP emulation run type out of range");
@@ -720,6 +715,11 @@ string Default2::processInputMessage(string input) {
             std::string data = ss.str();
             sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
         }
+        else{
+            sequence="";
+            noRpcRequest=true;
+        }
+        return sequence;
     }
     else if(endpoint=="LASER_DIVIDER"){
 
@@ -732,7 +732,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = std::stoi(parameters[0]);
+            long long num = std::stoll(parameters[0]);
             std::stringstream ss;
             ss << std::hex << num;
             std::string hex_str = ss.str();
@@ -763,10 +763,11 @@ string Default2::processInputMessage(string input) {
                 data2+="0";
             }
             data2+=hex_str;
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread";
+            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>2&&(index>=25&&index<=29)){
             sequence="";
+            noRpcRequest=true;
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
             int num = std::stoi(parameters[0]);
@@ -779,19 +780,20 @@ string Default2::processInputMessage(string input) {
                 data+="0";
             }
             data+=hex_str;
-            sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread";
+            sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
             int num = std::stoi(parameters[0]);
-            int temp = 0xFFFFFFFF;
+            long long temp = 0xFFFFFFFF;
             temp-=(1 << num);
             std::stringstream ss;
             ss << std::hex << temp;
             std::string data = ss.str();
-            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread";
+            sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("wrong parameters");
         }
         return sequence;
@@ -822,12 +824,12 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
     else if(endpoint=="BCID_OFFSET"){
         address="000000E3";
-        Print::PrintInfo(input);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -852,6 +854,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -881,6 +884,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -890,14 +894,15 @@ string Default2::processInputMessage(string input) {
     else if(endpoint=="CRU_ORBIT"){
         address="000000E9";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="CRU_BC"){
         address="000000EA";
@@ -908,92 +913,101 @@ string Default2::processInputMessage(string input) {
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="FIFO_COUNT"){
         address="000000EB";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
             this->publishError("Readonly parameter");
+            noRpcRequest=true;
         }
+        return sequence;
     }
     else if(endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"){
         address="000000EC";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
             this->publishError("Readonly parameter");
+            noRpcRequest=true;
         }
+        return sequence;
     }
     else if(endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"){
         address="000000ED";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="SEL_HITS_DROPPED"){
         address="000000EE";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="READOUT_RATE"){
         address="000000EF";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="IPbus_FIFO_DATA"){
         address="000000F0";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="EVENTS_COUNT"){
         address="000000F1";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="MCODE_TIME"){
         address="000000F7";
@@ -1004,20 +1018,23 @@ string Default2::processInputMessage(string input) {
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="FW_TIME"){
         address="000000FF";
         vector<string> parameters = Utility::splitString(input, ",");
-
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("Readonly parameter");
         }
+        return sequence;
     }
     else if(endpoint=="TRIGGERS_OUTPUTS_MODE"){
         address="0000006A";
@@ -1176,6 +1193,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("Wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -1201,6 +1219,7 @@ string Default2::processInputMessage(string input) {
             sequence="reset\n0x001"+address+data+",write\nread";
         }
         else{
+            noRpcRequest=true;
             this->publishError("Parameter can be only read or write and range is 0-7");
             sequence="";
         }
@@ -1274,6 +1293,7 @@ string Default2::processInputMessage(string input) {
             sequence="reset\n0x001"+address+data+",write\nread";
         }
         else{
+            noRpcRequest=true;
             this->publishError("wrong parameters");
             sequence="";
         }
@@ -1281,8 +1301,6 @@ string Default2::processInputMessage(string input) {
     }
     else if(endpoint=="TG_PATTERN_1"){
         address="000000DC";
-        Print::PrintInfo("TG PATTERN1");
-        Print::PrintInfo(input);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -1305,6 +1323,7 @@ string Default2::processInputMessage(string input) {
             sequence="reset\n0x001"+address+data+",write\nread";
         }
         else{
+            noRpcRequest=true;
             this->publishError("wrong parameters");
             sequence="";
         }
@@ -1312,8 +1331,6 @@ string Default2::processInputMessage(string input) {
     }
     else if(endpoint=="TG_PATTERN_0"){
         address="000000DD";
-        Print::PrintInfo("TG PATTERN0");
-        Print::PrintInfo(input);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -1336,6 +1353,7 @@ string Default2::processInputMessage(string input) {
             sequence="reset\n0x001"+address+data+",write\nread";
         }
         else{
+            noRpcRequest=true;
             this->publishError("wrong parameters");
             sequence="";
         }
@@ -1367,6 +1385,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -1454,6 +1473,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -1478,6 +1498,7 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
         return sequence;
     }
@@ -1547,28 +1568,14 @@ string Default2::processInputMessage(string input) {
         }
         else{
             sequence="";
+            noRpcRequest=true;
             this->publishError("wrong parameters");
-        }
-    }
-    else if(endpoint=="AVERAGE_TIME"){
-        address="00000020";
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            this->publishError("Value not to set");
-            sequence="";
         }
         return sequence;
     }
     else if(endpoint=="GENERATOR_FREQ_OFFSET"){
-        
-        //do przerobki
-        
         address="000000E0";
         int index = std::stoi(parameters[0]);
-        Print::PrintInfo("generator freq offset");
-        Print::PrintInfo(input);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -1714,12 +1721,12 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = 0;
+            long long num = 0;
             if(parameters[0].rfind("0x", 0)==0){
-                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+                num = std::stoll(parameters[0].substr(2), nullptr, 16);
             }
             else{
-                num = std::stoi(parameters[0]);
+                num = std::stoll(parameters[0]);
             }
             std::stringstream ss;
             ss << std::hex << num;
@@ -1756,8 +1763,8 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
-        Print::PrintInfo(sequence);
         return sequence;
     }
     else if(endpoint=="LASER_PATTERN_0"){
@@ -1766,12 +1773,12 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            int num = 0;
+            long long num = 0;
             if(parameters[0].rfind("0x", 0)==0){
-                num = std::stoi(parameters[0].substr(2), nullptr, 16);
+                num = std::stoll(parameters[0].substr(2), nullptr, 16);
             }
             else{
-                num = std::stoi(parameters[0]);
+                num = std::stoll(parameters[0]);
             }
             std::stringstream ss;
             ss << std::hex << num;
@@ -1808,14 +1815,19 @@ string Default2::processInputMessage(string input) {
         else{
             this->publishError("wrong parameters");
             sequence="";
+            noRpcRequest=true;
         }
-        Print::PrintInfo(sequence);
         return sequence;
     }
     if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
+        if(address==""){
+            Print::PrintError(endpoint);
+            address="00000000";
+        }
         sequence = "reset\n0x000"+address+"00000000,write\nread";
     }
     else if(input=="error"){
+        noRpcRequest=true;
         Print::PrintInfo("error");
         this->publishError("Error!");
     }
@@ -1891,6 +1903,7 @@ string Default2::processInputMessage(string input) {
                 data+=hex_str;
                 this->publishAnswer(data);
             }
+            data="00000000";
             sequence = "reset\n0x001"+address+data+",write\nread";
         }
         //this->publishAnswer(data);
@@ -1936,7 +1949,13 @@ string Default2::processOutputMessage(string output) {
         return std::to_string(tcm.temp.trigger5rate);
     }
     else if(endpoint=="LASER_DELAY"){
+        Print::PrintInfo(value);
         float tempValue = stoi(value, nullptr, 16);
+
+        if (tempValue > 10000) {
+            int16_t x = stoi(value, nullptr, 16);
+            tempValue=-(~x+1);
+        }
         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
         float halfBC_ns = 500. / systemClock_MHz;
         float phaseStep_ns = halfBC_ns / 
@@ -1945,6 +1964,17 @@ string Default2::processOutputMessage(string output) {
         //: 1280);
         tempValue = tempValue*phaseStep_ns;
         return std::to_string(tempValue);
+    }
+    else if(endpoint=="LASER_DIVIDER"){
+        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+        Print::PrintInfo(value.substr(0,6));
+        long long tempValue = std::stoll(value.substr(2,6), nullptr, 16);
+        Print::PrintInfo(std::to_string(tempValue));
+        Print::PrintInfo(std::to_string(systemClock_MHz*std::pow(10,6)));
+        Print::PrintInfo(std::to_string(tempValue==0?1<<24:tempValue));
+        Print::PrintInfo(std::to_string(systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue)));
+        float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
+        updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
     }
     noReturn=false;
   }

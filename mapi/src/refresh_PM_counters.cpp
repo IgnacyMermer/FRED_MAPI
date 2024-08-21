@@ -17,9 +17,10 @@ RefreshPMCounters::RefreshPMCounters() {
     finalValue = 0;
     firstTime=true;
     sequence = "reset";
-    //const std::string prefixesPM[2] = {"PMA0", "PMC0"};
-    const std::string prefixesPM[20] = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
-    const std::string addresses[20] = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
+    const std::string prefixesPM[2] = {"PMA0", "PMC0"};
+    const std::string addresses[2] = {"02", "16"};
+    //const std::string prefixesPM[20] = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
+    //const std::string addresses[20] = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
     int arraySize = sizeof(prefixesPM)/sizeof(string);
     for(int z=0; z<arraySize; z++){
         for(int i=0; i<=15; i++){

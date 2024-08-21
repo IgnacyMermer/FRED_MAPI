@@ -62,7 +62,6 @@ string TriggerSign::processOutputMessage(string output) {
   string value;
 
   try {
-    std::cout<<std::to_string(tcm.temp.trigger1sign);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 4, output.size());
     //Print::PrintInfo(value);

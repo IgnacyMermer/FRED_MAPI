@@ -8,6 +8,8 @@
 #include "Parser/utility.h"
 #include "TCM_values.h"
 #include <thread>
+#include <sstream>
+#include <cmath>
 #include <chrono>
 #include "../../core/include/dim/dic.hxx"
 #include "../../core/include/FREDServer/Fred/Mapi/iterativemapi.h"
@@ -20,7 +22,7 @@ RefreshData::RefreshData() {
 
 string RefreshData::processInputMessage(string input) {
 
-  sequence = "reset\n0x0000000000100000000,write\nread\n0x0000000000200000000,write\nread\n0x0000000000500000000,write\nread\n0x0000000000700000000,write\nread\n0x0000000000F00000000,write\nread\n0x0000000006A00000000,write\nread\n0x0000000006000000000,write\nread\n0x0000000006100000000,write\nread\n0x0000000006200000000,write\nread\n0x0000000006300000000,write\nread\n0x0000000006800000000,write\nread\n0x0000000006900000000,write\nread\n0x0000000006400000000,write\nread\n0x0000000006500000000,write\nread\n0x0000000006600000000,write\nread\n0x0000000006700000000,write\nread\n0x0000000007000000000,write\nread\n0x0000000007100000000,write\nread\n0x0000000007400000000,write\nread\n0x0000000007200000000,write\nread\n0x0000000007300000000,write\nread\n0x0000000001000000000,write\nread\n0x0000000001100000000,write\nread\n0x0000000001200000000,write\nread\n0x0000000001300000000,write\nread\n0x0000000001400000000,write\nread\n0x0000000001500000000,write\nread\n0x0000000001600000000,write\nread\n0x0000000001700000000,write\nread\n0x0000000001800000000,write\nread\n0x0000000001900000000,write\nread\n0x0000000003000000000,write\nread\n0x0000000003100000000,write\nread\n0x0000000003200000000,write\nread\n0x0000000003300000000,write\nread\n0x0000000003400000000,write\nread\n0x0000000003500000000,write\nread\n0x0000000003600000000,write\nread\n0x0000000003700000000,write\nread\n0x0000000003800000000,write\nread\n0x0000000003900000000,write\nread\n0x0000000000000000000,write\nread\n0x0000000000800000000,write\nread\n0x0000000000900000000,write\nread\n0x0000000000A00000000,write\nread\n0x0000000000B00000000,write\nread\n0x0000000000C00000000,write\nread\n0x0000000000D00000000,write\nread\n0x000000000E800000000,write\nread\n0x0000000001A00000000,write\nread\n0x0000000003A00000000,write\nread\n0x0000000005000000000,write\nread\n0x0000000007500000000,write\nread\n0x0000000007600000000,write\nread\n0x0000000007700000000,write\nread\n0x0000000007800000000,write\nread\n0x0000000007900000000,write\nread\n0x0000000007A00000000,write\nread\n0x0000000007B00000000,write\nread\n0x0000000007C00000000,write\nread\n0x0000000007D00000000,write\nread\n0x0000000007E00000000,write\nread\n0x000000000FC00000000,write\nread\n0x000000000FD00000000,write\nread\n0x000000000FE00000000,write\nread\n0x000000000D800000000,write\nread\n0x0000000001B00000000,write\nread\n0x0000000000400000000,write\nread\n0x0000000000300000000,write\nread\n0x0000000000E00000000,write\nread\n0x000000000E400000000,write\nread\n0x000000000E300000000,write\nread\n0x000000000D900000000,write\nread\n0x000000000E100000000,write\nread\n0x000000000DC00000000,write\nread\n0x000000000DD00000000,write\nread\n0x000000000E900000000,write\nread\n0x000000000EA00000000,write\nread\n0x000000000EB00000000,write\nread\n0x000000000EC00000000,write\nread\n0x000000000ED00000000,write\nread\n0x000000000EE00000000,write\nread\n0x000000000EF00000000,write\nread\n0x000000000F000000000,write\nread\n0x000000000F100000000,write\nread\n0x000000000F700000000,write\nread\n0x000000000FF00000000,write\nread\n0x0000000001E00000000,write\nread\n0x0000000001F00000000,write\nread\n0x0000000002000000000,write\nread\n0x000000000E000000000,write\nread\n0x000000000DF00000000,write\nread\n0x000000000DE00000000,write\nread\n0x0000000001C00000000,write\nread\n0x0000000001D00000000,write\nread\n0x000000000DC00000000,write\nread\n0x000000000DD00000000,write\nread";
+  sequence = "reset\n0x0000000000100000000,write\nread\n0x0000000000200000000,write\nread\n0x0000000000500000000,write\nread\n0x0000000000700000000,write\nread\n0x0000000000F00000000,write\nread\n0x0000000006A00000000,write\nread\n0x0000000006000000000,write\nread\n0x0000000006100000000,write\nread\n0x0000000006200000000,write\nread\n0x0000000006300000000,write\nread\n0x0000000006800000000,write\nread\n0x0000000006900000000,write\nread\n0x0000000006400000000,write\nread\n0x0000000006500000000,write\nread\n0x0000000006600000000,write\nread\n0x0000000006700000000,write\nread\n0x0000000007000000000,write\nread\n0x0000000007100000000,write\nread\n0x0000000007400000000,write\nread\n0x0000000007200000000,write\nread\n0x0000000007300000000,write\nread\n0x0000000001000000000,write\nread\n0x0000000001100000000,write\nread\n0x0000000001200000000,write\nread\n0x0000000001300000000,write\nread\n0x0000000001400000000,write\nread\n0x0000000001500000000,write\nread\n0x0000000001600000000,write\nread\n0x0000000001700000000,write\nread\n0x0000000001800000000,write\nread\n0x0000000001900000000,write\nread\n0x0000000003000000000,write\nread\n0x0000000003100000000,write\nread\n0x0000000003200000000,write\nread\n0x0000000003300000000,write\nread\n0x0000000003400000000,write\nread\n0x0000000003500000000,write\nread\n0x0000000003600000000,write\nread\n0x0000000003700000000,write\nread\n0x0000000003800000000,write\nread\n0x0000000003900000000,write\nread\n0x0000000000000000000,write\nread\n0x0000000000800000000,write\nread\n0x0000000000900000000,write\nread\n0x0000000000A00000000,write\nread\n0x0000000000B00000000,write\nread\n0x0000000000C00000000,write\nread\n0x0000000000D00000000,write\nread\n0x000000000E800000000,write\nread\n0x0000000001A00000000,write\nread\n0x0000000003A00000000,write\nread\n0x0000000005000000000,write\nread\n0x0000000007500000000,write\nread\n0x0000000007600000000,write\nread\n0x0000000007700000000,write\nread\n0x0000000007800000000,write\nread\n0x0000000007900000000,write\nread\n0x0000000007A00000000,write\nread\n0x0000000007B00000000,write\nread\n0x0000000007C00000000,write\nread\n0x0000000007D00000000,write\nread\n0x0000000007E00000000,write\nread\n0x000000000FC00000000,write\nread\n0x000000000FD00000000,write\nread\n0x000000000FE00000000,write\nread\n0x000000000D800000000,write\nread\n0x0000000001B00000000,write\nread\n0x0000000000400000000,write\nread\n0x0000000000300000000,write\nread\n0x0000000000E00000000,write\nread\n0x000000000E400000000,write\nread\n0x000000000E300000000,write\nread\n0x000000000D900000000,write\nread\n0x000000000E100000000,write\nread\n0x000000000DC00000000,write\nread\n0x000000000DD00000000,write\nread\n0x000000000E900000000,write\nread\n0x000000000EA00000000,write\nread\n0x000000000EB00000000,write\nread\n0x000000000EC00000000,write\nread\n0x000000000ED00000000,write\nread\n0x000000000EE00000000,write\nread\n0x000000000EF00000000,write\nread\n0x000000000F000000000,write\nread\n0x000000000F100000000,write\nread\n0x000000000F700000000,write\nread\n0x000000000FF00000000,write\nread\n0x0000000001E00000000,write\nread\n0x0000000001F00000000,write\nread\n0x0000000002000000000,write\nread\n0x000000000E000000000,write\nread\n0x000000000DF00000000,write\nread\n0x000000000DE00000000,write\nread\n0x0000000001C00000000,write\nread\n0x0000000001D00000000,write\nread";
   return sequence;
 }
 
@@ -49,6 +51,10 @@ string RefreshData::processOutputMessage(string output) {
           case 0:
             if(tcm.temp.delayC!=hexValue||firstTime){
               tcm.temp.delayC = hexValue;
+              if (hexValue > 10000) {
+                int16_t x = stoi(value, nullptr, 16);
+                hexValue=-(~x+1);
+              }
               Print::PrintInfo("sendCommand"+std::to_string(count));
               float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
               float halfBC_ns = 500. / systemClock_MHz;
@@ -57,13 +63,17 @@ string RefreshData::processOutputMessage(string output) {
               1024;
               // : 1280);
               float returnValue = hexValue*phaseStep_ns;
-              updateTopicAnswer("READOUTCARDS/TCM0/DELAY_C", std::to_string(hexValue));
+              updateTopicAnswer("READOUTCARDS/TCM0/DELAY_C", std::to_string(returnValue));
             }
             break;
           case 1:
             if(tcm.temp.delayLaser!=hexValue||firstTime){
               tcm.temp.delayLaser = hexValue;
-              float tempValue = stoi(value, nullptr, 16);
+              if (hexValue > 10000) {
+                int16_t x = stoi(value, nullptr, 16);
+                hexValue=-(~x+1);
+              }
+              float tempValue = hexValue;
               float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
               float halfBC_ns = 500. / systemClock_MHz;
               float phaseStep_ns = halfBC_ns / 
@@ -431,6 +441,10 @@ string RefreshData::processOutputMessage(string output) {
           case 41:
             if(tcm.temp.delayA!=hexValue||firstTime){
               tcm.temp.delayA = hexValue;
+              if (hexValue > 10000) {
+                int16_t x = stoi(value, nullptr, 16);
+                hexValue=-(~x+1);
+              }
               Print::PrintInfo("sendCommand"+std::to_string(count));
               float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
               float halfBC_ns = 500. / systemClock_MHz;
@@ -444,6 +458,7 @@ string RefreshData::processOutputMessage(string output) {
             break;
           case 42:
             if(tcm.temp.vtimeLow!=hexValue||firstTime){
+              //signed
               tcm.temp.vtimeLow = hexValue;
               Print::PrintInfo("sendCommand"+std::to_string(count));
               updateTopicAnswer("READOUTCARDS/TCM0/VTIME_LOW", std::to_string(hexValue));
@@ -451,6 +466,7 @@ string RefreshData::processOutputMessage(string output) {
             break;
           case 43:
             if(tcm.temp.vtimeHigh!=hexValue||firstTime){
+              //signed
               tcm.temp.vtimeHigh = hexValue;
               Print::PrintInfo("sendCommand"+std::to_string(count));
               updateTopicAnswer("READOUTCARDS/TCM0/VTIME_HIGH", std::to_string(hexValue));
@@ -628,8 +644,12 @@ string RefreshData::processOutputMessage(string output) {
           case 66:
             if(tcm.temp.laserDivider!=hexValue||firstTime){
               tcm.temp.laserDivider = hexValue;
+              float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+              long long tempValue = std::stoi(value.substr(2,6), nullptr, 16);
+              float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
               Print::PrintInfo("sendCommand"+std::to_string(count));
               updateTopicAnswer("READOUTCARDS/TCM0/LASER_DIVIDER", std::to_string(hexValue));
+              updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
             }
             break;
           case 67:
@@ -685,14 +705,14 @@ string RefreshData::processOutputMessage(string output) {
             if(tcm.temp.trgPatternLSB!=hexValue||firstTime){
               tcm.temp.trgPatternLSB = hexValue;
               Print::PrintInfo("sendCommand"+std::to_string(count));
-              updateTopicAnswer("READOUTCARDS/TCM0/TRG_CONT_PATTERN_LSB", std::to_string(hexValue));
+              updateTopicAnswer("READOUTCARDS/TCM0/TG_PATTERN_1", std::to_string(hexValue));
             }
             break;
           case 75:
             if(tcm.temp.trgPatternMSB!=hexValue||firstTime){
               tcm.temp.trgPatternMSB = hexValue;
               Print::PrintInfo("sendCommand"+std::to_string(count));
-              updateTopicAnswer("READOUTCARDS/TCM0/TRG_CONT_PATTERN_MSB", std::to_string(hexValue));
+              updateTopicAnswer("READOUTCARDS/TCM0/TG_PATTERN_0", std::to_string(hexValue));
             }
             break;
           case 76:
@@ -826,20 +846,6 @@ string RefreshData::processOutputMessage(string output) {
               tcm.temp.laserPattern0 = hexValue;
               Print::PrintInfo("sendCommand"+std::to_string(count));
               updateTopicAnswer("READOUTCARDS/TCM0/LASER_PATTERN_0", std::to_string(hexValue));
-            }
-            break;
-          case 95:
-            if(tcm.temp.tgPattern1!=hexValue||firstTime){
-              tcm.temp.tgPattern1 = hexValue;
-              Print::PrintInfo("sendCommand"+std::to_string(count));
-              updateTopicAnswer("READOUTCARDS/TCM0/TG_PATTERN_1", std::to_string(hexValue));
-            }
-            break;
-          case 96:
-            if(tcm.temp.tgPattern0!=hexValue||firstTime){
-              tcm.temp.tgPattern0 = hexValue;
-              Print::PrintInfo("sendCommand"+std::to_string(count));
-              updateTopicAnswer("READOUTCARDS/TCM0/TG_PATTERN_0", std::to_string(hexValue));
             }
             break;
 

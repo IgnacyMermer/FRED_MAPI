@@ -40,13 +40,14 @@ string BoardType::processOutputMessage(string output) {
     int boardSerialNr = ((boardBits>>8)&0xFF);
     tcm.act.boardType=detectorSubType;
     tcm.act.SERIAL_NUM=boardSerialNr;
+    return std::to_string(boardBits);
   }
   catch (exception &e) {
     Print::PrintError("ERROR in connection with ALF!");
     finalValue=0;
   }
 
-  return value;
+  return std::to_string(0);
 }
 
 /*

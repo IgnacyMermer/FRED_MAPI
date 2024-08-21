@@ -55,6 +55,10 @@ string DelayC::processOutputMessage(string output) {
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoi(value, nullptr, 16);
+    if (finalValue > 10000) {
+      int16_t x = stoi(value, nullptr, 16);
+      finalValue=-(~x+1);
+    }
     float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
     float halfBC_ns = 500. / systemClock_MHz;
     float phaseStep_ns = halfBC_ns / 

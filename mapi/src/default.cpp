@@ -149,10 +149,10 @@ void Default::processExecution()
       else if(endpoint=="RDH_FIELDS"){
         value = tcm.temp.systemId;
       }
-      else if(endpoint=="TRG_CONT_PATTERN_LSB"){
+      else if(endpoint=="TG_PATTERN_1"){
         value = tcm.temp.trgPatternLSB;
       }
-      else if(endpoint=="TRG_CONT_PATTERN_MSB"){
+      else if(endpoint=="TG_PATTERN_0"){
         value = tcm.temp.trgPatternMSB;
       }
       else if(endpoint=="CRU_ORBIT"){
