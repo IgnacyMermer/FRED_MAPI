@@ -112,7 +112,7 @@ string RefreshCounters::processOutputMessage(string output) {
                     difference=1000;
                   }
 
-                  triggerRate = abs(hexValue - tcm.temp.trigger4cnt)/difference*1000.0;
+                  triggerRate = abs(hexValue - tcm.temp.trigger4cnt)/1./difference*1000.0;
 
                   tcm.temp.oldTimeTrigger4 = milliseconds_since_epoch;
                 }
@@ -155,7 +155,7 @@ string RefreshCounters::processOutputMessage(string output) {
                     difference=1000;
                   }  
 
-                  triggerRate = abs(hexValue - tcm.temp.trigger2cnt)/difference*1000.0;
+                  triggerRate = abs(hexValue - tcm.temp.trigger2cnt)/1./difference*1000.0;
 
                   tcm.temp.oldTimeTrigger2 = milliseconds_since_epoch;
                 }
@@ -196,7 +196,7 @@ string RefreshCounters::processOutputMessage(string output) {
                     difference=1000;
                   }
 
-                  triggerRate = abs(hexValue - tcm.temp.trigger1cnt)/difference*1000.0;
+                  triggerRate = abs(hexValue - tcm.temp.trigger1cnt)/1./difference*1000.0;
 
                   tcm.temp.oldTimeTrigger1 = milliseconds_since_epoch;
                 }
@@ -241,7 +241,7 @@ string RefreshCounters::processOutputMessage(string output) {
                     difference=1000;
                   }
 
-                  triggerRate = abs(hexValue - tcm.temp.trigger3cnt)/difference*1000.0;
+                  triggerRate = abs(hexValue - tcm.temp.trigger3cnt)/1./difference*1000.0;
 
                 }
 
@@ -286,7 +286,7 @@ string RefreshCounters::processOutputMessage(string output) {
                     difference=1000;
                   }
 
-                  bkgrndRate = abs(hexValue - tcm.temp.bkgrnd0Cnt)/difference*1000.0;
+                  bkgrndRate = abs(hexValue - tcm.temp.bkgrnd0Cnt)/1./difference*1000.0;
 
                 }
 

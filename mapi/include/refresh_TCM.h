@@ -1,10 +1,8 @@
 #include "Fred/Mapi/mapi.h"
-#include "Fred/Mapi/iterativemapi.h"
 
-class RefreshData: public Iterativemapi
-{
+class RefreshTCM: public Mapi{
 public:
-    RefreshData();
+    RefreshTCM();
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
@@ -12,7 +10,7 @@ public:
     float finalValue;
     bool firstTime;
     string sequence;
+    int count;
     std::vector<string> services;
     std::vector<long long> oldValues;
-    int count;
 };

@@ -1,6 +1,6 @@
 #include "mapifactory.h"
 #include "work_status.h"
-#include "actual_values.h"
+#include "board_status.h"
 #include "delayA.h"
 #include "delayC.h"
 #include "board_temp.h"
@@ -21,6 +21,7 @@
 #include "refresh_PMs.h"
 #include "refresh_PM_counters.h"
 #include "ResetErrors.h"
+#include "refresh_TCM.h"
 
 
 MapiFactory::MapiFactory(Fred *fred)
@@ -63,9 +64,9 @@ void MapiFactory::generateObjects(){
     WorkStatus* workStatus = new WorkStatus();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/WORK_STATUS", workStatus);
     this->mapiObjects.push_back(workStatus);
-    ActualValues* actualValues = new ActualValues();
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BOARD_STATUS", actualValues);
-    this->mapiObjects.push_back(actualValues);
+    BoardStatus* boardStatus = new BoardStatus();
+    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BOARD_STATUS", boardStatus);
+    this->mapiObjects.push_back(boardStatus);
     DelayA* delayA = new DelayA();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/DELAY_A", delayA);
     this->mapiObjects.push_back(delayA);
@@ -739,6 +740,9 @@ void MapiFactory::generateObjects(){
     ResetErrors* resetErrors = new ResetErrors();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/RESET_ERRORS", resetErrors);
     this->mapiObjects.push_back(resetErrors);
+    RefreshTCM* refreshTCM = new RefreshTCM();
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_TCM", refreshTCM);
+    this->mapiObjects.push_back(refreshTCM);
     
 }
 

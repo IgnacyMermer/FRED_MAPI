@@ -11,4 +11,9 @@ public:
 
     long long finalValue;
     string sequence, endpoint;
+    void sequenceOperation1(long long num, std::string address, std::string& sequence);
+    void sequenceOperation2(int num, std::string address, std::string& sequence);
+    void sequenceOperation3(int num, std::string address, std::string& sequence);
+    void sequenceOperationBits(int num, int power, int maskNumber, std::string address, std::string& sequence);
+    long long parameterValue(std::string strValue);
 };
