@@ -174,6 +174,7 @@ string Triggers::processInputMessage(string input) {
         sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
     }
     else{
+        noRpcRequest=true;
         this->publishError("Wrong parameters");
         sequence="";
     }
@@ -191,8 +192,6 @@ string Triggers::processOutputMessage(string output) {
     
     std::string binary_str = binary.to_string();
 
-    //newRequest("reset\n0x0000000006A00000000,write\nreadr");
-
     return binary_str;
   }
   catch (exception &e) {
@@ -203,62 +202,3 @@ string Triggers::processOutputMessage(string output) {
   return to_string(finalValue);
 }
 
-
-/*Triggers::Triggers() : IndefiniteMapi::IndefiniteMapi()
-{}
-
-Triggers::~Triggers(){}
-
-void Triggers::processExecution(){
-    bool running;
-    string response;
-
-    string request = this->waitForRequest(running);
-    vector<string> parameters = Utility::splitString(request, ",");
-
-    if (!running){
-        return;
-    }
-
-    if (request == ""||(parameters.size()>1&&parameters[1]=="0")){
-        int triggers = tcm.temp.triggers;
-        std::bitset<32> binary(triggers);
-        
-        std::string binary_str = binary.to_string();
-        this->publishAnswer(binary_str);
-    }
-    else if (request == "error"){
-        this->publishError("Error!");
-    }
-    else{
-        std::string sequence = "";
-        if(parameters[1]=="1"){
-            string data="";
-            if(parameters[0].length()>2&&parameters[0].substr(0,2)=="0x"){
-                parameters[0]=parameters[0].substr(2);
-                for(int i=0; i<8-parameters[0].length(); i++){
-                    data+="0";
-                }
-                data+=parameters[0];
-            }
-            else{
-                int num = std::stoi(parameters[0]);
-                std::stringstream ss;
-                ss << std::hex << num;
-                std::string hex_str = ss.str();
-                for(int i=0; i<8-hex_str.length(); i++){
-                    data+="0";
-                }
-                data+=hex_str;
-            }
-            sequence = "reset\n0x0010000006A"+data+",write\nread";
-        }
-        else{
-            sequence = "reset\n0x0000000006A00000000,write\nread";
-        }
-
-        response = this->executeAlfSequence(sequence);
-
-    }
-}
-*/

@@ -9,7 +9,7 @@ public:
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
-    float finalValue;
+    float hexValue;
     bool firstTime;
     string sequence;
     std::vector<std::string> services;

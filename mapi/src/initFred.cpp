@@ -175,7 +175,7 @@ void InitFred::processExecution(){
                     Print::PrintInfo("set parameters sequence:");
                     Print::PrintInfo(sequence);
 
-                    this->executeAlfSequence(sequence);
+                    //this->executeAlfSequence(sequence);
                     
                 }
                 
@@ -185,6 +185,7 @@ void InitFred::processExecution(){
             Print::PrintError(e.what());
         }
 
+        sequence="reset\n";
         sequence+="0x0020000000EFFFFFCFF,write\nread\n0x0030000000E00000200,write\nread\n";
         sequence+="0x0010000006600003711,write\nread\n";
         sequence+="0x0010000006400003790,write\nread\n";
@@ -192,6 +193,8 @@ void InitFred::processExecution(){
         sequence+="0x001000000620000388E,write\nread\n";
         sequence+="0x001000000600000390D,write\nread\n";
         sequence+="0x0010000001E000FFFFF,write\nread";
+
+        
         //response = this->executeAlfSequence(sequence);
         this->publishAnswer("response");
     }

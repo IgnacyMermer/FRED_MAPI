@@ -14,6 +14,9 @@ void PM_default::sequenceOperation1(long long num, std::string address, std::str
     std::stringstream ss;
     ss << std::hex << num;
     std::string hex_str = ss.str();
+    if(hex_str.length()>8){
+        hex_str=hex_str.substr(hex_str.length()-4);
+    }
     std::string data="";
     for(int i=0; i<8-hex_str.length(); i++){
         data+="0";
@@ -47,6 +50,9 @@ void PM_default::sequenceOperationBits(int num, int power, int maskNumber, std::
     std::stringstream ss;
     ss << std::hex << maskNumber;
     std::string hex_str = ss.str();
+    if(hex_str.length()>8){
+        hex_str=hex_str.substr(hex_str.length()-4);
+    }
     std::string data="";
     for(int i=0; i<8-hex_str.length(); i++){
         data+="0";
@@ -57,6 +63,9 @@ void PM_default::sequenceOperationBits(int num, int power, int maskNumber, std::
     ss2 << std::hex << temp;
     std::string data2 = "";
     hex_str = ss2.str();
+    if(hex_str.length()>8){
+        hex_str=hex_str.substr(hex_str.length()-4);
+    }
     for(int i=0; i<8-hex_str.length(); i++){
         data2+="0";
     }
@@ -65,6 +74,7 @@ void PM_default::sequenceOperationBits(int num, int power, int maskNumber, std::
 }
 
 long long PM_default::parameterValue(std::string strValue){
+    long long inputValue;
     if(strValue.rfind("0x", 0)==0){
         return std::stoll(strValue.substr(2), nullptr, 16);
     }
@@ -92,6 +102,9 @@ std::string PM_default::numberLetter(int number){
         std::string temp(1, tempChar);
         numberLetterStr+=temp;
     }
+    if(numberLetterStr.length()==1){
+        numberLetterStr="0"+numberLetterStr;
+    }
     return numberLetterStr;
 }
 
@@ -104,6 +117,21 @@ PM_default::PM_default(std::string endpointParam, std::string pmNumberParam) {
 }
 
 string PM_default::processInputMessage(string input) {
+
+    /*input must consists one of following sentence:
+        - (empty request) - read
+        - "set" - read
+        - "(sth dont matter),0" - read
+        - "(value),1" - write value on address of parameter
+        - "(index),2" - set bit to zero
+        - "(index),3" - set bit to one
+        - "(index),(2/3),(value)" - set value on bits, user must provide index in the range of word bits in parameter address, then value is put on these bits. There is no matter if user provide 2 or 3 as the second parameter
+    
+    After going inside of if else function there is creation of correct sequence string and then it is return to ALF, if user provides not valid data, 
+    the error is returning and there is no request to ALF.
+    */
+
+
     std::string address="", sequence="";
     vector<string> parameters = Utility::splitString(input, ",");
     if(endpoint=="TRG_SETTINGS"){
@@ -166,7 +194,7 @@ string PM_default::processInputMessage(string input) {
         }
         if(endpoint.rfind("ADC1_BASELINE",0)==0){
             std::string lastNumber = numberLetter(0xE +(endpoint[endpoint.length()-1]-'1')*2);
-            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            address="0000"+pmNumber+lastNumber;
         }
         else if(endpoint.rfind("ADC0_BASELINE",0)==0){
             std::string lastNumber = numberLetter(0xD +(endpoint[endpoint.length()-1]-'1')*2);
@@ -187,6 +215,66 @@ string PM_default::processInputMessage(string input) {
             this->publishError("Readonly parameter");
             noRpcRequest=true;
             sequence="";
+        }
+        return sequence;
+    }
+    else if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0||endpoint.rfind("TDC_3_PHASE_TUNING",0)==0||endpoint.rfind("RAW_TDC_DATA",0)==0
+    ||endpoint.rfind("ADC0_DISPERSION",0)==0||endpoint.rfind("ADC1_DISPERSION",0)==0||endpoint.rfind("ADC0_MEAN",0)==0||endpoint.rfind("ADC1_MEAN",0)==0
+    ||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0||endpoint.rfind("COUNT_CFD_HITS",0)==0){
+
+        if(endpoint.rfind("TDC_3_PHASE_TUNING",0)==0){
+            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+"3F";
+        }
+        else if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0){
+            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+"3E";
+        }
+        else{
+            if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
+                noRpcRequest=true;
+                this->publishError("wrong parameter endpoint pm number");
+                return "";
+            }
+            if(endpoint.rfind("RAW_TDC_DATA",0)==0){
+                std::string lastNumber = numberLetter(0x40+(endpoint[endpoint.length()-1]-'1'));
+                address="0000"+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("ADC0_DISPERSION",0)==0){
+                std::string lastNumber = numberLetter(0x4C+(endpoint[endpoint.length()-1]-'1')*2);
+                address="0000"+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("ADC1_DISPERSION",0)==0){
+                std::string lastNumber = numberLetter(0x4D+(endpoint[endpoint.length()-1]-'1')*2);
+                address="0000"+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("ADC0_MEAN",0)==0){
+                std::string lastNumber = numberLetter(0x64+(endpoint[endpoint.length()-1]-'1')*2);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("ADC1_MEAN",0)==0){
+                std::string lastNumber = numberLetter(0x65+(endpoint[endpoint.length()-1]-'1')*2);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("CFD_ZERO",0)==0){
+                std::string lastNumber = numberLetter(0x81+(endpoint[endpoint.length()-1]-'1')*4);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("ADC_ZERO",0)==0){
+                std::string lastNumber = numberLetter(0x82+(endpoint[endpoint.length()-1]-'1')*4);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("COUNT_CFD_HITS",0)==0){
+                std::string lastNumber = numberLetter(0xC0+(endpoint[endpoint.length()-1]-'1')*2);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+        }
+
+        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        }
+        else{
+            noRpcRequest=true;
+            sequence="";
+            this->publishError("Readonly parameter");
         }
         return sequence;
     }
@@ -212,123 +300,31 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0||endpoint.rfind("TDC_3_PHASE_TUNING",0)==0){
-        if(endpoint.rfind("TDC_3_PHASE_TUNING",0)==0){
-            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+"3F";
+    else if(endpoint=="CHANNELS_MASK"||endpoint=="CHANNEL_ADC_BASELINE"||endpoint.rfind("CFD_THRESHOLD",0)==0||endpoint.rfind("THRESHOLD_CALIBRATION",0)==0||endpoint.rfind("ADC_DELAY",0)==0){
+        if(endpoint=="CHANNEL_ADC_BASELINE"){
+            address="0000027D";
         }
-        else if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0){
-            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+"3E";
-        }
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        else if(endpoint=="CHANNELS_MASK"){
+            address="0000027C";
         }
         else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
+            if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
+                noRpcRequest=true;
+                return "";
+            }
+            if(endpoint.rfind("CFD_THRESHOLD",0)==0){
+                std::string lastNumber = numberLetter(0x80+(endpoint[endpoint.length()-1]-'1')*4);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("ADC_DELAY",0)==0){
+                std::string lastNumber = numberLetter(0x83+(endpoint[endpoint.length()-1]-'1')*4);
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
+            else if(endpoint.rfind("THRESHOLD_CALIBRATION",0)==0){
+                std::string lastNumber = numberLetter(0xB0+(endpoint[endpoint.length()-1]-'1'));
+                address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
+            }
         }
-        return sequence;
-    }
-    else if(endpoint.rfind("RAW_TDC_DATA",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        //std::string lastNumber = "";
-        std::string lastNumber = numberLetter(0x40+(endpoint[endpoint.length()-1]-'1'));
-        address="0000"+pmNumber+lastNumber;
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("ADC0_DISPERSION",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x4C+(endpoint[endpoint.length()-1]-'1')*2);
-        address="0000"+pmNumber+lastNumber;
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("ADC1_DISPERSION",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x4D+(endpoint[endpoint.length()-1]-'1')*2);
-        address="0000"+pmNumber+lastNumber;
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("ADC0_MEAN",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x64+(endpoint[endpoint.length()-1]-'1')*2);
-        address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        int index = std::stoi(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("ADC1_MEAN",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x65+(endpoint[endpoint.length()-1]-'1')*2);
-        address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        int index = std::stoi(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint=="CHANNELS_MASK"){
-        address="0000027C";
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
-            this->publishError("Wrong parameters");
-        }
-        return sequence;
-    }
-    else if(endpoint=="CHANNEL_ADC_BASELINE"){
-        address="0000027D";
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -388,92 +384,6 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint.rfind("CFD_THRESHOLD",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x80+(endpoint[endpoint.length()-1]-'1')*4);
-        address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        int index = parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("CFD_ZERO",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x81+(endpoint[endpoint.length()-1]-'1')*4);
-        address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        int index = parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("ADC_ZERO",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0x82+(endpoint[endpoint.length()-1]-'1')*4);
-        address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        int index = parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("THRESHOLD_CALIBRATION",0)==0||endpoint.rfind("ADC_DELAY",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        if(endpoint.rfind("ADC_DELAY",0)==0){
-            std::string lastNumber = numberLetter(0x83+(endpoint[endpoint.length()-1]-'1')*4);
-            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        }
-        else if(endpoint.rfind("THRESHOLD_CALIBRATION",0)==0){
-            std::string lastNumber = numberLetter(0xB0+(endpoint[endpoint.length()-1]-'1'));
-            address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
-        }
-        int index = parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Wrong parameters");
-        }
-        return sequence;
-    }
     else if(endpoint=="BOARD_TEMPERATURE"||endpoint=="BOARD_ID"||endpoint=="LAST_RESTART_REASON"){
         if(endpoint=="BOARD_ID"){
             address="0000"+pmNumber+"BD";
@@ -484,22 +394,6 @@ string PM_default::processInputMessage(string input) {
         else if(endpoint=="LAST_RESTART_REASON"){
             address="0000"+pmNumber+"BE";
         }
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("COUNT_CFD_HITS",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            return "";
-        }
-        std::string lastNumber = numberLetter(0xC0+(endpoint[endpoint.length()-1]-'1')*2);
-        address="0000"+std::string(pmNumber.length()>1?"":"0")+pmNumber+lastNumber;
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -762,7 +656,7 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="FPGA_TEMPERATURE"||endpoint=="1VPOWER"){
+    else if(endpoint=="FPGA_TEMPERATURE"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TIMESTAMP"){
         if(endpoint=="1VPOWER"){
             address="0000"+pmNumber+"FD";
         }
@@ -787,17 +681,22 @@ string PM_default::processInputMessage(string input) {
 }
 
 string PM_default::processOutputMessage(string output) {
+
+    /*
+        When ALF return output, program takes only value saved on last 8bits of read word. On some parameters in the following lines there are made some 
+        calculations, in other case value is returned with no additional operations.
+    */
+
     string value;
-    Print::PrintInfo(output);
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoll(value, nullptr, 16);
     if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0){
 
+        //program split two words from one parameter for two values to transfer into signed values.
         //return "number_1,number_2"
 
         std::string returnStr = "";
-        finalValue = 0;
         unsigned int x;
         std::stringstream ss;
         ss << std::hex << value.substr(6,2);
@@ -824,8 +723,18 @@ string PM_default::processOutputMessage(string output) {
         return returnStr;
     }
     else if(endpoint.rfind("TDC_3_PHASE_TUNING",0)==0){
-        finalValue = 0;
-        finalValue += stoll(value.substr(6,2), nullptr, 16)*13*8/7;
+        std::string returnStr = "";
+        unsigned int x;
+        std::stringstream ss;
+        ss << std::hex << value.substr(6,2);
+        ss >> x;
+
+        if (x > 127) {
+            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x)))*13*8/7);
+        }
+        else {
+            returnStr += std::to_string((static_cast<int>(x))*13*8/7);
+        }
     }
     else if(endpoint.rfind("RAW_TDC_DATA",0)==0){
         std::stringstream ss;
@@ -848,6 +757,13 @@ string PM_default::processOutputMessage(string output) {
         return std::to_string(finalValue * 3 / 65536.0);
     }
 
+    if (finalValue > 50000&&(endpoint.rfind("CHANNEL_SETTINGS",0)==0||endpoint.rfind("ADC0_BASELINE",0)==0
+    ||endpoint.rfind("ADC1_BASELINE",0)==0||endpoint.rfind("ADC0_MEAN",0)==0||endpoint.rfind("ADC1_MEAN",0)==0
+    ||endpoint.rfind("ADC1_MEAN",0)==0||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0
+    ||endpoint.rfind("BOARD_TEMPERATURE",0)==0)) {
+      int16_t x = stoi(value, nullptr, 16);
+      finalValue=-(~x+1);
+    }
 
     return to_string(finalValue);
 
