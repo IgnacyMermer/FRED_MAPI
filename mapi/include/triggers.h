@@ -1,7 +1,6 @@
 #include "Fred/Mapi/mapi.h"
-#include "Fred/Mapi/iterativemapi.h"
 
-class Triggers: public Iterativemapi
+class Triggers: public Mapi
 {
 public:
     Triggers();
@@ -11,18 +10,9 @@ public:
 
     int finalValue;
     string sequence;
+
+    void sequenceOperation1(long long num, std::string address, std::string& sequence);
+    void sequenceOperation2(int num, std::string address, std::string& sequence);
+    void sequenceOperation3(int num, std::string address, std::string& sequence);
+    void sequenceOperationBits(int num, int power, int maskNumber, std::string address, std::string& sequence);
 };
-
-
-/*#include "Fred/Mapi/indefinitemapi.h"
-
-class Triggers: public IndefiniteMapi
-{
-private:
-	void processExecution();
-
-public:
-	Triggers();
-	virtual ~Triggers();
-};*/
-

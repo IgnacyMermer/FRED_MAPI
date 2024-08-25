@@ -41,7 +41,6 @@ void InitFred::processExecution(){
         Print::PrintInfo(response.substr(13, 8));
         delayA = stoll(response.substr(13, 8), nullptr, 16);
         response = response.substr(22);
-        Print::PrintInfo("response2");
         Print::PrintInfo(response.substr(13, 8));
         delayC = stoll(response.substr(13, 8), nullptr, 16);
     }

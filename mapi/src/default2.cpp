@@ -8,6 +8,7 @@
 #include "TCM_values.h"
 #include <sstream>
 #include <cmath>
+#include "SWT_creator.h"
 
 
 Default2::Default2(std::string endpointParam) {
@@ -15,68 +16,6 @@ Default2::Default2(std::string endpointParam) {
     endpoint=endpointParam;
 }
 
-void Default2::sequenceOperation1(long long num, std::string address, std::string& sequence){
-    std::stringstream ss;
-    ss << std::hex << num;
-    std::string hex_str = ss.str();
-    std::string data="";
-    for(int i=0; i<8-hex_str.length(); i++){
-        data+="0";
-    }
-    data+=hex_str;
-    sequence="reset\n0x001"+address+data+",write\nread";
-}
-
-void Default2::sequenceOperation2(int num, std::string address, std::string& sequence){
-    int temp = 0xFFFFFFFF;
-    temp-=(1 << num);
-    std::stringstream ss;
-    ss << std::hex << temp;
-    std::string data = ss.str();
-    sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
-}
-
-void Default2::sequenceOperation3(int num, std::string address, std::string& sequence){
-    std::stringstream ss;
-    ss << std::hex << (1 << num);
-    std::string hex_str = ss.str();
-    std::string data="";
-    for(int i=0; i<8-hex_str.length(); i++){
-        data+="0";
-    }
-    data+=hex_str;
-    sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread\n0x000"+address+"00000000,write\nread";
-}
-
-void Default2::sequenceOperationBits(int num, int power, int maskNumber, std::string address, std::string& sequence){
-    std::stringstream ss;
-    ss << std::hex << maskNumber;
-    std::string hex_str = ss.str();
-    std::string data="";
-    for(int i=0; i<8-hex_str.length(); i++){
-        data+="0";
-    }
-    data+=hex_str;
-    long long temp=num*std::pow(2,power);
-    std::stringstream ss2;
-    ss2 << std::hex << temp;
-    std::string data2 = "";
-    hex_str = ss2.str();
-    for(int i=0; i<8-hex_str.length(); i++){
-        data2+="0";
-    }
-    data2+=hex_str;
-    sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
-}
-
-long long Default2::parameterValue(std::string strValue){
-    if(strValue.rfind("0x", 0)==0){
-        return std::stoll(strValue.substr(2), nullptr, 16);
-    }
-    else{
-        return std::stoll(strValue);
-    }
-}
 
 string Default2::processInputMessage(string input) {
     std::string address="", sequence="";
@@ -89,13 +28,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            long long num = parameterValue(parameters[0]);
+            long long num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
             if(num<-512||num>511){
                 noRpcRequest=true;
                 this->publishError("Value out of correct range");
                 return "";
             }
-            sequenceOperation1(num, address, sequence);
+            SWT_creator::sequenceOperation1(num, address, sequence);
         }
         else{
             noRpcRequest=true;
@@ -114,13 +53,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            long long num = parameterValue(parameters[0]);
+            long long num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
             if(num<0||num>65535){
                 noRpcRequest=true;
                 this->publishError("Value out of correct range");
                 return "";
             }
-            sequenceOperation1(num, address, sequence);
+            SWT_creator::sequenceOperation1(num, address, sequence);
         }
         else{
             this->publishError("Parameter can be only read or write");
@@ -135,7 +74,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            float num = parameterValue(parameters[0]);
+            float num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
             float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
             float halfBC_ns = 500. / systemClock_MHz;
             float phaseStep_ns = halfBC_ns / (
@@ -149,7 +88,7 @@ string Default2::processInputMessage(string input) {
                 noRpcRequest=true;
                 return "";  
             }
-            sequenceOperation1((long long) num, address, sequence);
+            SWT_creator::sequenceOperation1((long long) num, address, sequence);
         }
         else{
             this->publishError("Parameter can be only read or write");
@@ -165,7 +104,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("wrong parameters");
@@ -183,13 +122,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
-            sequenceOperation3((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation3((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
-            sequenceOperation2((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation2((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("Parameter can be only read or write or RMW");
@@ -205,19 +144,19 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="1"||parameters[0]=="2")){
-            sequenceOperationBits(parameterValue(parameters[2]), 1, 0xFFFFFFF9, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 1, 0xFFFFFFF9, address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="4"||parameters[0]=="5"||parameters[0]=="6"||parameters[0]=="7")){
-            sequenceOperationBits(parameterValue(parameters[2]), 4, 0xFFFFFF0F, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 4, 0xFFFFFF0F, address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
-            sequenceOperation3((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation3((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
-            sequenceOperation2((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation2((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("wrong parameters");
@@ -229,27 +168,27 @@ string Default2::processInputMessage(string input) {
     else if(endpoint=="MODE_SETTINGS"){
         address="000000D8";
         std::string hex_str = "";
-        int num = parameterValue(parameters[0]);
+        int num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(num>=0&&num<=3)){
-            sequenceOperationBits(parameterValue(parameters[2]), 0, 0xFFFFFFF0, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFFFF0, address, sequence);
         }
         else if(parameters.size()>2&&(num>=4&&num<=7)){
-            sequenceOperationBits(parameterValue(parameters[2]), 4, 0xFFFFFF0F, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 4, 0xFFFFFF0F, address, sequence);
         }
         else if(parameters.size()>2&&(num>=16&&num<=19)){
-            sequenceOperationBits(parameterValue(parameters[2]), 16, 0xFFF0FFFF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 16, 0xFFF0FFFF, address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
-            sequenceOperation3((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation3((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
-            sequenceOperation2((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation2((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             sequence="";
@@ -268,20 +207,20 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(index>=0&&index<=23)){
-            sequenceOperationBits(parameterValue(parameters[2]), 0, 0xFF000000, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 0, 0xFF000000, address, sequence);
         }
         else if(parameters.size()>2&&(index>=25&&index<=29)){
             sequence="";
             noRpcRequest=true;
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
-            sequenceOperation3((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation3((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
-            sequenceOperation2((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation2((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             sequence="";
@@ -299,7 +238,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("wrong parameters");
@@ -344,28 +283,28 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="0"||parameters[0]=="1")){
-            sequenceOperationBits(parameterValue(parameters[2]), 0, 0xFFFFFFFC, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFFFFC, address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="3"||parameters[0]=="4")){
-            sequenceOperationBits(parameterValue(parameters[2]), 3, 0xFFFFFFE7, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 3, 0xFFFFFFE7, address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="6"||parameters[0]=="7")){
-            sequenceOperationBits(parameterValue(parameters[2]), 6, 0xFFFFFF3F, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 6, 0xFFFFFF3F, address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="9"||parameters[0]=="10")){
-            sequenceOperationBits(parameterValue(parameters[2]), 9, 0xFFFFF9FF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 9, 0xFFFFF9FF, address, sequence);
         }
         else if(parameters.size()>2&&(parameters[0]=="12"||parameters[0]=="13")){
-            sequenceOperationBits(parameterValue(parameters[2]), 12, 0xFFFFCFFF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 12, 0xFFFFCFFF, address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
-            sequenceOperation3((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation3((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
-            sequenceOperation2((int)parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation2((int)SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("Wrong parameters");
@@ -380,12 +319,12 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            long long num = parameterValue(parameters[0]);
+            long long num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
             if(!(num>=0&&num<=7)){
                 this->publishError("Value out of correct ranges");
                 return "";
             }
-            sequenceOperation1(num, address, sequence);
+            SWT_creator::sequenceOperation1(num, address, sequence);
         }
         else{
             noRpcRequest=true;
@@ -405,7 +344,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("wrong parameters");
@@ -420,13 +359,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(indexTemp>=0&&indexTemp<=15)){
-            sequenceOperationBits(parameterValue(parameters[2]), 0, 0xFFFF0000, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 0, 0xFFFF0000, address, sequence);
         }
         else if(parameters.size()>2&&(indexTemp>=16&&indexTemp<=31)){
-            sequenceOperationBits(parameterValue(parameters[2]), 16, 0x0000FFFF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 16, 0x0000FFFF, address, sequence);
         }
         else{
             this->publishError("wrong parameters");
@@ -442,7 +381,7 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("wrong parameters");
@@ -458,13 +397,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(index>=0&&index<=5)){
-            sequenceOperationBits(parameterValue(parameters[2]), 0, 0xFFFFFFC0, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFFFC0, address, sequence);
         }
         else if(parameters.size()>2&&(index>=6&&index<=7)){
-            sequenceOperationBits(parameterValue(parameters[2]), 6, 0xFFFFFF3F, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 6, 0xFFFFFF3F, address, sequence);
         }
         else{
             sequence="";
@@ -480,19 +419,19 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>2&&(index>=0&&index<=11)){
-            sequenceOperationBits(parameterValue(parameters[2]), 0, 0xFFFFF000, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFF000, address, sequence);
         }
         else if(parameters.size()>2&&(index>=12&&index<=15)){
-            sequenceOperationBits(parameterValue(parameters[2]), 12, 0xFFFF0FFF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 12, 0xFFFF0FFF, address, sequence);
         }
         else if(parameters.size()>2&&(index>=16&&index<=27)){
-            sequenceOperationBits(parameterValue(parameters[2]), 16, 0xF000FFFF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 16, 0xF000FFFF, address, sequence);
         }
         else if(parameters.size()>2&&(index>=28&&index<=31)){
-            sequenceOperationBits(parameterValue(parameters[2]), 28, 0x0FFFFFFF, address, sequence);
+            SWT_creator::sequenceOperationBits(SWT_creator::SWT_creator::parameterValue(parameters[2]), 28, 0x0FFFFFFF, address, sequence);
         }
         else{
             this->publishError("Value not to set");
@@ -511,13 +450,13 @@ string Default2::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            sequenceOperation1(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation1(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="3"){
-            sequenceOperation3(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation3(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else if(parameters.size()>1&&parameters[1]=="2"){
-            sequenceOperation2(parameterValue(parameters[0]), address, sequence);
+            SWT_creator::sequenceOperation2(SWT_creator::SWT_creator::parameterValue(parameters[0]), address, sequence);
         }
         else{
             this->publishError("wrong parameters");

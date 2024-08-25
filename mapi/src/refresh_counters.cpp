@@ -87,7 +87,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/TRG_ORA_RATE", std::to_string(triggerRate));
                 }
                 tcm.temp.trigger5cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/TRIGGER5_CNT", std::to_string(hexValue));
               }
               break;
@@ -130,7 +129,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/TRG_ORC_RATE", std::to_string(triggerRate));
                 }
                 tcm.temp.trigger4cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/TRIGGER4_CNT", std::to_string(hexValue));
               }
               break;
@@ -143,13 +141,11 @@ string RefreshCounters::processOutputMessage(string output) {
                 
                 int milliseconds_since_epoch = static_cast<int>(duration.count());
                 if(firstTime){
-                  Print::PrintInfo("lalallaa1");
                   triggerRate = abs(hexValue - tcm.temp.trigger2cnt)/1.0;
                   tcm.temp.oldTimeTrigger2 = milliseconds_since_epoch;
                 }
                 else/* if(tcm.temp.countersUpdRate!=0)*/{
                   //triggerRate = (hexValue - tcm.temp.trigger1cnt)/tcm.temp.countersUpdRate;
-                  Print::PrintInfo("info");
                   int difference = milliseconds_since_epoch - tcm.temp.oldTimeTrigger2;
                   if(difference==0){
                     difference=1000;
@@ -214,7 +210,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/TRG_C_RATE", std::to_string(triggerRate));
                 }
                 tcm.temp.trigger1cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/TRIGGER1_CNT", std::to_string(hexValue));
               }
               break;
@@ -259,7 +254,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/TRG_V_RATE", std::to_string(triggerRate));
                 }
                 tcm.temp.trigger3cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/TRIGGER3_CNT", std::to_string(hexValue));
               }
               break;
@@ -304,7 +298,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND0_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.trigger3cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND0_CNT", std::to_string(hexValue));
               }
               break;
@@ -349,7 +342,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND1_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd1Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND1_CNT", std::to_string(hexValue));
               }
               break;
@@ -394,7 +386,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND2_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd2Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND2_CNT", std::to_string(hexValue));
               }
               break;
@@ -439,7 +430,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND3_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd3Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND3_CNT", std::to_string(hexValue));
               }
               break;
@@ -484,7 +474,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND4_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd4Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND4_CNT", std::to_string(hexValue));
               }
               break;
@@ -529,7 +518,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND5_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd5Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND5_CNT", std::to_string(hexValue));
               }
               break;
@@ -574,7 +562,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND6_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd6Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND6_CNT", std::to_string(hexValue));
               }
               break;
@@ -619,7 +606,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND7_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd7Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND7_CNT", std::to_string(hexValue));
               }
               break;
@@ -664,7 +650,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND8_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd8Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND8_CNT", std::to_string(hexValue));
               }
               break;
@@ -709,7 +694,6 @@ string RefreshCounters::processOutputMessage(string output) {
                   updateTopicAnswer("READOUTCARDS/TCM0/BKGRND9_RATE", std::to_string(bkgrndRate));
                 }
                 tcm.temp.bkgrnd9Cnt = hexValue;
-                Print::PrintInfo("sendCommand"+std::to_string(count));
                 updateTopicAnswer("READOUTCARDS/TCM0/BKGRND9_CNT", std::to_string(hexValue));
               }
               break;
