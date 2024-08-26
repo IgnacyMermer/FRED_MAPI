@@ -1,10 +1,12 @@
 
 
 #include <cstdint>
-
+#include <iostream>
+#include <map>
 
 
 struct TypeTCM {
+    std::map<std::string, std::string> addresses;
     struct ActualValues {
         int32_t DELAY_A         :16,  //┐
                                 :16,  //┘00

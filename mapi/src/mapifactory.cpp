@@ -5,6 +5,7 @@
 #include "delayC.h"
 #include "board_temp.h"
 #include "board_type.h"
+#include "Parser/utility.h"
 #include "trigger_sign.h"
 #include "trigger_rand.h"
 #include "refresh_data.h"
@@ -21,7 +22,12 @@
 #include "refresh_PMs.h"
 #include "refresh_PM_counters.h"
 #include "ResetErrors.h"
-#include "refresh_TCM.h"
+#include "initGBT.h"
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include "histogramReader.h"
 
 
 MapiFactory::MapiFactory(Fred *fred)
@@ -55,11 +61,55 @@ MapiFactory::~MapiFactory()
 **/
 void MapiFactory::generateObjects(){
 
-    const std::string prefixes[2] = {"PMA0", "PMC0"};
-    const std::string addresses[2] = {"02", "16"};
-    //const std::string prefixes[20] = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
-    //const std::string addresses[20] = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
-    int arraySize = sizeof(prefixes)/sizeof(string);
+    std::string fileName = "detector_type.cfg";
+    boost::property_tree::ptree tree;
+
+
+    if (!boost::filesystem::exists(fileName)) {
+        fileName = "./configuration/" + fileName;
+    }
+
+    std::vector<std::string> prefixes = {"PMA0", "PMC0"}, addresses = {"02", "16"};
+
+    try{
+        boost::property_tree::ini_parser::read_ini(fileName, tree);
+
+        /*const std::vector<std::string> prefixesMaxTest = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
+        const std::vector<std::string> addressesMaxTest = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
+        const std::vector<std::string> prefixesFT0 = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8"};
+        const std::vector<std::string> addressesFT0 = {"02", "16", "04", "18", "06", "1A", "08", "1C", "0A", "1E", "0C", "20", "0E", "22", "10", "24", "12", "26"};
+          */
+
+        for (const auto& section : tree) {
+            if(section.first=="CONFIG"){
+                for (const auto& key_value : section.second) {
+                    if(key_value.first=="TYPE"){
+                        
+                    }
+                    else if(key_value.first=="PM_NAMES"){
+                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
+                        prefixes.clear();
+                        for(auto name : names){
+                            prefixes.push_back(name);
+                        }
+                    }
+                    else if(key_value.first=="PM_ADDRESSES"){
+                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
+                        addresses.clear();
+                        for(auto name : names){
+                            addresses.push_back(name);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch(exception& e){
+        Print::PrintInfo("error during creating sequence refresh TCM");
+        Print::PrintError(e.what());
+    }
+
+    int arraySize = prefixes.size();
 
     WorkStatus* workStatus = new WorkStatus();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/WORK_STATUS", workStatus);
@@ -395,7 +445,7 @@ void MapiFactory::generateObjects(){
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_PMS", refreshPMs);
     this->mapiObjects.push_back(refreshPMs);
     for(int j=0; j<arraySize; j++){
-        PM_default*  trgSettings = new PM_default("TRG_SETTINGS", addresses[j]);
+        PM_default*  trgSettings = new PM_default("TRG_SETTINGS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRG_SETTINGS", trgSettings);
         this->mapiObjects.push_back(trgSettings);
         for(int i=1; i<=12; i++){
@@ -409,7 +459,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  channelSettings = new PM_default("CHANNEL_SETTINGS_"+number, addresses[j]);
+            PM_default*  channelSettings = new PM_default("CHANNEL_SETTINGS_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CHANNEL_SETTINGS_"+number, channelSettings);
             this->mapiObjects.push_back(channelSettings);
         }
@@ -424,7 +474,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcBaseline = new PM_default("ADC0_BASELINE_"+number, addresses[j]);
+            PM_default*  adcBaseline = new PM_default("ADC0_BASELINE_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC0_BASELINE_"+number, adcBaseline);
             this->mapiObjects.push_back(adcBaseline);
         }
@@ -439,7 +489,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcBaseline = new PM_default("ADC1_BASELINE_"+number, addresses[j]);
+            PM_default*  adcBaseline = new PM_default("ADC1_BASELINE_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC1_BASELINE_"+number, adcBaseline);
             this->mapiObjects.push_back(adcBaseline);
         }
@@ -454,7 +504,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcBaseline = new PM_default("ADC0_RANGE_CORR_"+number, addresses[j]);
+            PM_default*  adcBaseline = new PM_default("ADC0_RANGE_CORR_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC0_RANGE_CORR_"+number, adcBaseline);
             this->mapiObjects.push_back(adcBaseline);
         }
@@ -469,18 +519,18 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcBaseline = new PM_default("ADC1_RANGE_CORR_"+number, addresses[j]);
+            PM_default*  adcBaseline = new PM_default("ADC1_RANGE_CORR_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC1_RANGE_CORR_"+number, adcBaseline);
             this->mapiObjects.push_back(adcBaseline);
             
         }
-        PM_default*  adcBaseline = new PM_default("TRG_CHARGE_LEVELS", addresses[j]);
+        PM_default*  adcBaseline = new PM_default("TRG_CHARGE_LEVELS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRG_CHARGE_LEVELS", adcBaseline);
         this->mapiObjects.push_back(adcBaseline);
-        PM_default*  tdc12PhaseTuning = new PM_default("TDC_12_PHASE_TUNING", addresses[j]);
+        PM_default*  tdc12PhaseTuning = new PM_default("TDC_12_PHASE_TUNING", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TDC_12_PHASE_TUNING", tdc12PhaseTuning);
         this->mapiObjects.push_back(tdc12PhaseTuning);
-        PM_default*  tdc3PhaseTuning = new PM_default("TDC_3_PHASE_TUNING", addresses[j]);
+        PM_default*  tdc3PhaseTuning = new PM_default("TDC_3_PHASE_TUNING", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TDC_3_PHASE_TUNING", tdc3PhaseTuning);
         this->mapiObjects.push_back(tdc3PhaseTuning);
         for(int i=1; i<=12; i++){
@@ -494,7 +544,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  rawTdcData = new PM_default("RAW_TDC_DATA_"+number, addresses[j]);
+            PM_default*  rawTdcData = new PM_default("RAW_TDC_DATA_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/RAW_TDC_DATA_"+number, rawTdcData);
             this->mapiObjects.push_back(rawTdcData);
         }
@@ -509,7 +559,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcDisp = new PM_default("ADC0_DISPERSION_"+number, addresses[j]);
+            PM_default*  adcDisp = new PM_default("ADC0_DISPERSION_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC0_DISPERSION_"+number, adcDisp);
             this->mapiObjects.push_back(adcDisp);
         }
@@ -524,7 +574,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcDisp = new PM_default("ADC1_DISPERSION_"+number, addresses[j]);
+            PM_default*  adcDisp = new PM_default("ADC1_DISPERSION_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC1_DISPERSION_"+number, adcDisp);
             this->mapiObjects.push_back(adcDisp);
         }
@@ -539,7 +589,7 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcMean = new PM_default("ADC0_MEAN_"+number, addresses[j]);
+            PM_default*  adcMean = new PM_default("ADC0_MEAN_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC0_MEAN_"+number, adcMean);
             this->mapiObjects.push_back(adcMean);
         }
@@ -554,20 +604,20 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  adcMean = new PM_default("ADC1_MEAN_"+number, addresses[j]);
+            PM_default*  adcMean = new PM_default("ADC1_MEAN_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC1_MEAN_"+number, adcMean);
             this->mapiObjects.push_back(adcMean);
         }
-        PM_default*  channelsMask = new PM_default("CHANNELS_MASK", addresses[j]);
+        PM_default*  channelsMask = new PM_default("CHANNELS_MASK", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CHANNELS_MASK", channelsMask);
         this->mapiObjects.push_back(channelsMask);
-        PM_default*  channelAdcBaseline = new PM_default("CHANNEL_ADC_BASELINE", addresses[j]);
+        PM_default*  channelAdcBaseline = new PM_default("CHANNEL_ADC_BASELINE", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CHANNEL_ADC_BASELINE", channelAdcBaseline);
         this->mapiObjects.push_back(channelAdcBaseline);
-        PM_default*  histogrammingControl = new PM_default("HISTOGRAMMING_CONTROL", addresses[j]);
+        PM_default*  histogrammingControl = new PM_default("HISTOGRAMMING_CONTROL", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/HISTOGRAMMING_CONTROL", histogrammingControl);
         this->mapiObjects.push_back(histogrammingControl);
-        PM_default*  statusBits = new PM_default("STATUS_BITS", addresses[j]);
+        PM_default*  statusBits = new PM_default("STATUS_BITS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/STATUS_BITS", statusBits);
         this->mapiObjects.push_back(statusBits);
         for(int i=1; i<=12; i++){
@@ -581,30 +631,30 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  tempMapi = new PM_default("CFD_THRESHOLD_"+number, addresses[j]);
+            PM_default*  tempMapi = new PM_default("CFD_THRESHOLD_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CFD_THRESHOLD_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("CFD_ZERO_"+number, addresses[j]);
+            tempMapi = new PM_default("CFD_ZERO_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CFD_ZERO_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("ADC_ZERO_"+number, addresses[j]);
+            tempMapi = new PM_default("ADC_ZERO_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC_ZERO_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("ADC_DELAY_"+number, addresses[j]);
+            tempMapi = new PM_default("ADC_DELAY_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ADC_DELAY_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("THRESHOLD_CALIBRATION_"+number, addresses[j]);
+            tempMapi = new PM_default("THRESHOLD_CALIBRATION_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/THRESHOLD_CALIBRATION_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
             
         }
-        PM_default*  boardTemp = new PM_default("BOARD_TEMPERATURE", addresses[j]);
+        PM_default*  boardTemp = new PM_default("BOARD_TEMPERATURE", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/BOARD_TEMPERATURE", boardTemp);
         this->mapiObjects.push_back(boardTemp);
-        PM_default*  boardId = new PM_default("BOARD_ID", addresses[j]);
+        PM_default*  boardId = new PM_default("BOARD_ID", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/BOARD_ID", boardId);
         this->mapiObjects.push_back(boardId);
-        PM_default*  lastRestartReason = new PM_default("LAST_RESTART_REASON", addresses[j]);
+        PM_default*  lastRestartReason = new PM_default("LAST_RESTART_REASON", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/LAST_RESTART_REASON", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
         for(int i=1; i<=12; i++){
@@ -618,113 +668,113 @@ void MapiFactory::generateObjects(){
             else if(i==12){
                 number="C";
             }
-            PM_default*  tempMapi = new PM_default("COUNT_CFD_HITS_"+number, addresses[j]);
+            PM_default*  tempMapi = new PM_default("COUNT_CFD_HITS_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/COUNT_CFD_HITS_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("COUNT_TRG_HITS_"+number, addresses[j]);
+            tempMapi = new PM_default("COUNT_TRG_HITS_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/COUNT_TRG_HITS_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("RATE_CFD_HITS_"+number, addresses[j]);
+            tempMapi = new PM_default("RATE_CFD_HITS_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/RATE_CFD_HITS_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
-            tempMapi = new PM_default("RATE_TRG_HITS_"+number, addresses[j]);
+            tempMapi = new PM_default("RATE_TRG_HITS_"+number, addresses[j], prefixes[j]);
             this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/RATE_TRG_HITS_"+number, tempMapi);
             this->mapiObjects.push_back(tempMapi);
         }
-        lastRestartReason = new PM_default("MODE_SETTINGS", addresses[j]);
+        lastRestartReason = new PM_default("MODE_SETTINGS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/MODE_SETTINGS", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("TRIGGER_RESPOND_MASK", addresses[j]);
+        lastRestartReason = new PM_default("TRIGGER_RESPOND_MASK", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRIGGER_RESPOND_MASK", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("DATA_BUNCH_PATTERN", addresses[j]);
+        lastRestartReason = new PM_default("DATA_BUNCH_PATTERN", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/DATA_BUNCH_PATTERN", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("TRIGGER_SINGLE_VALUE", addresses[j]);
+        lastRestartReason = new PM_default("TRIGGER_SINGLE_VALUE", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRIGGER_SINGLE_VALUE", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("TRIGGER_CONT_PATTERN_MSB", addresses[j]);
+        lastRestartReason = new PM_default("TRIGGER_CONT_PATTERN_MSB", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRIGGER_CONT_PATTERN_MSB", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("TRIGGER_CONT_PATTERN_LSB", addresses[j]);
+        lastRestartReason = new PM_default("TRIGGER_CONT_PATTERN_LSB", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRIGGER_CONT_PATTERN_LSB", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("TRIGGER_CONT_VALUE", addresses[j]);
+        lastRestartReason = new PM_default("TRIGGER_CONT_VALUE", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRIGGER_CONT_VALUE", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("GENERATORS_BUNCH_FREQ", addresses[j]);
+        lastRestartReason = new PM_default("GENERATORS_BUNCH_FREQ", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/GENERATORS_BUNCH_FREQ", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("GENERATORS_FREQ_OFFSET", addresses[j]);
+        lastRestartReason = new PM_default("GENERATORS_FREQ_OFFSET", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/GENERATORS_FREQ_OFFSET", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("RDH_FIELDS1", addresses[j]);
+        lastRestartReason = new PM_default("RDH_FIELDS1", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/RDH_FIELDS1", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("RDH_FIELDS2", addresses[j]);
+        lastRestartReason = new PM_default("RDH_FIELDS2", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/RDH_FIELDS2", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("DELAYS", addresses[j]);
+        lastRestartReason = new PM_default("DELAYS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/DELAYS", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("DATA_SELECT_TRG_MASK", addresses[j]);
+        lastRestartReason = new PM_default("DATA_SELECT_TRG_MASK", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/DATA_SELECT_TRG_MASK", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("MODES_STATUS", addresses[j]);
+        lastRestartReason = new PM_default("MODES_STATUS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/MODES_STATUS", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("CRU_BC", addresses[j]);
+        lastRestartReason = new PM_default("CRU_BC", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CRU_BC", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("CRU_ORBIT", addresses[j]);
+        lastRestartReason = new PM_default("CRU_ORBIT", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CRU_ORBIT", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FIFO_COUNT", addresses[j]);
+        lastRestartReason = new PM_default("FIFO_COUNT", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FIFO_COUNT", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("SEL_FIRST_HIT_DROPPED_ORBIT", addresses[j]);
+        lastRestartReason = new PM_default("SEL_FIRST_HIT_DROPPED_ORBIT", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/SEL_FIRST_HIT_DROPPED_ORBIT", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("SEL_LAST_HIT_DROPPED_ORBIT", addresses[j]);
+        lastRestartReason = new PM_default("SEL_LAST_HIT_DROPPED_ORBIT", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/SEL_LAST_HIT_DROPPED_ORBIT", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("SEL_HITS_DROPPED", addresses[j]);
+        lastRestartReason = new PM_default("SEL_HITS_DROPPED", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/SEL_HITS_DROPPED", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("READOUT_RATE", addresses[j]);
+        lastRestartReason = new PM_default("READOUT_RATE", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/READOUT_RATE", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("CURRENT_ADDRESS", addresses[j]);
+        lastRestartReason = new PM_default("CURRENT_ADDRESS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/CURRENT_ADDRESS", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("HISTOGRAM_DATA_READOUT", addresses[j]);
+        lastRestartReason = new PM_default("HISTOGRAM_DATA_READOUT", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/HISTOGRAM_DATA_READOUT", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("ATX_TIMESTAMP", addresses[j]);
+        lastRestartReason = new PM_default("ATX_TIMESTAMP", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/ATX_TIMESTAMP", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FW_UPGRADE_COMM", addresses[j]);
+        lastRestartReason = new PM_default("FW_UPGRADE_COMM", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FW_UPGRADE_COMM", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FW_UPGRADE_DATA", addresses[j]);
+        lastRestartReason = new PM_default("FW_UPGRADE_DATA", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FW_UPGRADE_DATA", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FW_UPGRADE_END", addresses[j]);
+        lastRestartReason = new PM_default("FW_UPGRADE_END", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FW_UPGRADE_END", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FW_UPGRADE_STATUS", addresses[j]);
+        lastRestartReason = new PM_default("FW_UPGRADE_STATUS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FW_UPGRADE_STATUS", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FPGA_TEMPERATURE", addresses[j]);
+        lastRestartReason = new PM_default("FPGA_TEMPERATURE", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FPGA_TEMPERATURE", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("1VPOWER", addresses[j]);
+        lastRestartReason = new PM_default("1VPOWER", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/1VPOWER", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("18VPOWER", addresses[j]);
+        lastRestartReason = new PM_default("18VPOWER", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/18VPOWER", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FPGA_TIMESTAMP", addresses[j]);
+        lastRestartReason = new PM_default("FPGA_TIMESTAMP", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FPGA_TIMESTAMP", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
     }
@@ -740,10 +790,12 @@ void MapiFactory::generateObjects(){
     ResetErrors* resetErrors = new ResetErrors();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/RESET_ERRORS", resetErrors);
     this->mapiObjects.push_back(resetErrors);
-    RefreshTCM* refreshTCM = new RefreshTCM();
-    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_TCM", refreshTCM);
-    this->mapiObjects.push_back(refreshTCM);
-    
+    InitGBT* initGBT = new InitGBT();
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/INIT_GBT", initGBT);
+    this->mapiObjects.push_back(initGBT);
+    HistogramReader* histogramReader = new HistogramReader();
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/HISTOGRAM_READER", histogramReader);
+    this->mapiObjects.push_back(histogramReader);
 }
 
 

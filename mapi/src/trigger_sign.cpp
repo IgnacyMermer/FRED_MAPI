@@ -17,9 +17,10 @@ TriggerSign::TriggerSign(std::string endpoint) {
 }
 
 string TriggerSign::processInputMessage(string input) {
-  std::string address = "";
+  //std::string address = "";
+  std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/"+triggerEndpoint];
   vector<string> parameters = Utility::splitString(input, ",");
-  if(triggerEndpoint=="TRG_ORA_SIGN"){
+  /*if(triggerEndpoint=="TRG_ORA_SIGN"){
     address="00000060";
   }
   else if(triggerEndpoint=="TRG_ORC_SIGN"){
@@ -33,7 +34,7 @@ string TriggerSign::processInputMessage(string input) {
   }
   else if(triggerEndpoint=="TRG_C_SIGN"){
     address="00000066";
-  }
+  }*/
 
   if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
     sequence = "reset\n0x000"+address+"00000000,write\nread";

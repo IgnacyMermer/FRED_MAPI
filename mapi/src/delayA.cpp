@@ -16,9 +16,9 @@ DelayA::DelayA() {
 string DelayA::processInputMessage(string input) {
 
   vector<string> parameters = Utility::splitString(input, ",");
-
+  std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/DELAY_A"];
   if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-    sequence = "reset\n0x0000000000000000000,write\nread";
+    sequence = "reset\n0x000"+address+"00000000,write\nread";
   }
   else if(parameters.size()>1&&parameters[1]=="1"){
     float num = std::stof(parameters[0]);
@@ -39,7 +39,7 @@ string DelayA::processInputMessage(string input) {
       data+="0";
     }
     data+=hex_str;
-    sequence="reset\n0x00100000000"+data+",write\nread";
+    sequence="reset\n0x001"+address+data+",write\nread";
   }
   else{
     sequence="";
@@ -75,61 +75,4 @@ string DelayA::processOutputMessage(string output) {
 
   return to_string(finalValue);
 }
-
-
-/*DelayA::DelayA() : IndefiniteMapi::IndefiniteMapi()
-{}
-
-
-DelayA::~DelayA(){}
-
-void DelayA::processExecution(){
-    bool running;
-    string response;
-
-    string request = this->waitForRequest(running);
-
-    Print::PrintInfo(request);
-    
-    vector<string> parameters = Utility::splitString(request, ",");
-
-    if (!running){
-        return;
-    }
-
-    if (request == ""||(parameters.size()>1&&parameters[1]=="0")){
-      int delayATemp = tcm.temp.delayA;
-      float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-      float halfBC_ns = 500. / systemClock_MHz;
-      float phaseStep_ns = halfBC_ns / (SERIAL_NUM ? 1024 : 1280);
-      float finalValue = delayATemp*phaseStep_ns;
-      this->publishAnswer(std::to_string(finalValue));
-    }
-    else if (request == "error"){
-        this->publishError("Error!");
-    }
-    else if(parameters.size()>1&&parameters[1]=="1"){
-      std::string data="";
-      float num = std::stof(parameters[0]);response;
-      float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-      float halfBC_ns = 500. / systemClock_MHz;
-      float phaseStep_ns = halfBC_ns / (SERIAL_NUM ? 1024 : 1280);
-      num = num / phaseStep_ns;
-      int value = (int)num;
-      std::stringstream ss;
-      ss << std::hex << value;
-      std::string hex_str = ss.str();
-      data="";
-      for(int i=0; i<8-hex_str.length(); i++){
-        data+="0";
-      }
-      data+=hex_str;
-      std::string sequence = "reset\n0x00100000000"+data+",write\nread";
-      Print::PrintInfo("save delay A");
-      Print::PrintInfo(sequence);
-      response = this->executeAlfSequence(sequence);
-      Print::PrintInfo(response);
-      this->publishAnswer(parameters[0]);
-    }
-}*/
 

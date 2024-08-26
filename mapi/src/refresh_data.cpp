@@ -39,6 +39,7 @@ RefreshData::RefreshData() {
         for (const auto& key_value : section.second) {
           sequence+="\n0x000000000"+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
           services.push_back(serviceName+key_value.second.get_value<std::string>());
+          tcm.addresses[serviceName+key_value.second.get_value<std::string>()]="00"+key_value.first.substr(key_value.first.length()-2);
         }
       }
     }
@@ -47,7 +48,6 @@ RefreshData::RefreshData() {
     Print::PrintInfo("error during creating sequence refresh TCM");
     Print::PrintError(e.what());
   }
-
 }
 
 string RefreshData::processInputMessage(string input) {

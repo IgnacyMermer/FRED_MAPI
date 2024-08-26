@@ -63,9 +63,9 @@ void TriggerRand::processExecution(){
         this->publishError("Error!");
     }
     else{
-
-        std::string sequence = "", address="";
-        if(triggerEndpoint=="TRIGGER5_RAND"){
+        std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/"+triggerEndpoint];
+        std::string sequence = "";
+        /*if(triggerEndpoint=="TRIGGER5_RAND"){
             address="00000061";
         }
         else if(triggerEndpoint=="TRIGGER4_RAND"){
@@ -79,7 +79,7 @@ void TriggerRand::processExecution(){
         }
         else if(triggerEndpoint=="TRIGGER1_RAND"){
             address="00000067";
-        }
+        }*/
         
         if(parameters[1]=="1"){
             string data="";

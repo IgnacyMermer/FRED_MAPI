@@ -14,9 +14,9 @@ BoardTemp::BoardTemp() {
 
 string BoardTemp::processInputMessage(string input) {
   vector<string> parameters = Utility::splitString(input, ",");
-
+  std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/TEMPERATURE"];
   if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-    sequence = "reset\n0x0000000000500000000,write\nread";
+    sequence = "reset\n0x000"+address+"00000000,write\nread";
   }
   else{
     sequence="";
@@ -42,36 +42,4 @@ string BoardTemp::processOutputMessage(string output) {
 
   return to_string(finalValue);
 }
-
-
-/*BoardTemp::BoardTemp() : IndefiniteMapi::IndefiniteMapi()
-{}
-
-BoardTemp::~BoardTemp(){}
-
-void BoardTemp::processExecution(){
-    bool running;
-    string response;
-
-    string request = this->waitForRequest(running);
-    if (!running){
-        return;
-    }
-
-    if (request == ""){
-      int boardTemp = tcm.temp.boardTemp;
-      float finalValue = boardTemp/10.;
-      this->publishAnswer(std::to_string(finalValue));
-    }
-    else if (request == "error"){
-        this->publishError("Error!");
-    }
-    else{
-        //response = this->executeAlfSequence("read\n0x00000170,0x80000000"); // execute desired sequence to alf, waits for response from ALF
-        //this->publishAnswer(response);
-
-        //response = this->executeAlfSequence("read\n0x00000180,0x80000000"); // It is possible to execute multiple sequences to ALF with one command from WinCC
-        //this->publishAnswer(response);
-    }
-}*/
 

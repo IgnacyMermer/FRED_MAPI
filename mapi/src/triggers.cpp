@@ -20,7 +20,8 @@ Triggers::Triggers() {
 }
 
 string Triggers::processInputMessage(string input) {
-    std::string address="0000006A";
+    //std::string address="0000006A";
+    std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/TRIGGERS_OUTPUTS_MODE"];
     vector<string> parameters = Utility::splitString(input, ",");
     if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
         sequence = "reset\n0x000"+address+"00000000,write\nread";

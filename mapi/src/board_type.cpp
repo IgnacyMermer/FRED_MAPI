@@ -15,11 +15,10 @@ BoardType::BoardType() {
 }
 
 string BoardType::processInputMessage(string input) {
-  
   vector<string> parameters = Utility::splitString(input, ",");
-
+  std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/BOARD_STATUS"];
   if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-    sequence = "reset\n0x0000000000700000000,write\nread";
+    sequence = "reset\n0x000"+address+"00000000,write\nread";
   }
   else{
     sequence="";
@@ -49,45 +48,3 @@ string BoardType::processOutputMessage(string output) {
 
   return std::to_string(0);
 }
-
-/*
-
-BoardType::BoardType() : IndefiniteMapi::IndefiniteMapi()
-{}
-
-BoardType::~BoardType(){}
-
-void BoardType::processExecution(){
-    bool running;
-    string response;
-
-    string request = this->waitForRequest(running);
-    if (!running){
-        return;
-    }
-
-    if (request == ""){
-      int finalValue = tcm.temp.boardType;
-      int detectorSubType = finalValue & 3;
-      int boardSerialNr = ((finalValue>>8)&0xFF);
-      tcm.act.boardType=detectorSubType;
-      tcm.act.SERIAL_NUM=boardSerialNr;
-      std::stringstream stream;
-      stream << std::hex << tcm.temp.boardType;
-      std::string hexValue = "0x"+stream.str();
-      this->publishAnswer(hexValue);
-    }
-    else if (request == "error"){
-        this->publishError("Error!");
-    }
-    else{
-
-        //response = this->executeAlfSequence("read\n0x00000170,0x80000000"); // execute desired sequence to alf, waits for response from ALF
-        //this->publishAnswer(response);
-
-        //response = this->executeAlfSequence("read\n0x00000180,0x80000000"); // It is possible to execute multiple sequences to ALF with one command from WinCC
-        //this->publishAnswer(response);
-    }
-}
-
-*/

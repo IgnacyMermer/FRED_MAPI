@@ -20,10 +20,9 @@ Default2::Default2(std::string endpointParam) {
 string Default2::processInputMessage(string input) {
     std::string address="", sequence="";
     vector<string> parameters = Utility::splitString(input, ",");
+    address = "0000"+tcm.addresses["READOUTCARDS/TCM0/"+endpoint];
 
     if(endpoint=="VTIME_LOW"||endpoint=="VTIME_HIGH"){
-        if(endpoint=="VTIME_HIGH"){ address="00000009";}
-        else if(endpoint=="VTIME_LOW"){ address="00000008";}
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -44,11 +43,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="SC_LEVEL_A"||endpoint=="SC_LEVEL_C"||endpoint=="C_LEVEL_A"||endpoint=="C_LEVEL_C"){
-        if(endpoint=="SC_LEVEL_C"){ address="0000000B";}
-        else if(endpoint=="SC_LEVEL_A"){ address="0000000A";}
-        else if(endpoint=="C_LEVEL_A"){ address="0000000C";}
-        else if(endpoint=="C_LEVEL_C"){ address="0000000D";}
-
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -69,7 +63,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="LASER_DELAY"){
-        address="00000002";
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -97,8 +90,18 @@ string Default2::processInputMessage(string input) {
         }
         return sequence;
     }
+    else if(endpoint.rfind("BKGRND",0)==0){
+        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        }
+        else{
+            this->publishError("readonly parameter");
+            sequence = "";
+            noRpcRequest=true;
+        }
+        return sequence;
+    }
     else if(endpoint=="ATTENUATOR"){
-        address="00000003";
         int index = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -114,10 +117,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="EXT_SW"||endpoint=="SIDE_A_STATUS"||endpoint=="SIDE_C_STATUS"){
-        if(endpoint=="EXT_SW"){ address="00000004";}
-        else if(endpoint=="SIDE_A_STATUS"){ address="0000001A";}
-        else if(endpoint=="SIDE_C_STATUS"){ address="0000003A";}
-
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -138,8 +137,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="MODE"){
-        std::string hex_str = "";
-        address="0000000E";
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -166,8 +163,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="MODE_SETTINGS"){
-        address="000000D8";
-        std::string hex_str = "";
         int num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -200,8 +195,6 @@ string Default2::processInputMessage(string input) {
 
         //do sprawdzenia wartosc wyswietlana
 
-        address="0000001B";
-        std::string hex_str = "";
         int index = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -230,10 +223,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="DATA_SEL_TRG_MASK"||endpoint=="BCID_OFFSET"||endpoint=="DG_TRG_RESPOND_MASK"||endpoint=="RDH_FIELDS"){
-        if(endpoint=="BCID_OFFSET"){ address="000000E3";}
-        else if(endpoint=="DATA_SEL_TRG_MASK"){ address="000000E4";}
-        else if(endpoint=="DG_TRG_RESPOND_MASK"){ address="000000D9";}
-        else if(endpoint=="RDH_FIELDS"){ address="000000E1";}
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -249,23 +238,7 @@ string Default2::processInputMessage(string input) {
     }
     else if(endpoint=="CRU_ORBIT"||endpoint=="CRU_BC"||endpoint=="FIFO_COUNT"||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"||endpoint=="SEL_HITS_DROPPED"
     ||endpoint=="READOUT_RATE"||endpoint=="IPbus_FIFO_DATA"||endpoint=="EVENTS_COUNT"||endpoint=="MCODE_TIME"||endpoint=="FW_TIME"||endpoint=="TEMPERATURE"||endpoint=="MODES_STATUS"
-    ||endpoint=="FPGA_STATUS"||endpoint=="1VPOWER"||endpoint=="18VPOWER"){
-        if(endpoint=="CRU_BC"){ address="000000EA";}
-        else if(endpoint=="CRU_ORBIT"){ address="000000E9";}
-        else if(endpoint=="FIFO_COUNT"){ address="000000EB";}
-        else if(endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"){ address="000000EC";}
-        else if(endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"){ address="000000ED";}
-        else if(endpoint=="SEL_HITS_DROPPED"){ address="000000EE";}
-        else if(endpoint=="READOUT_RATE"){ address="000000EF";}
-        else if(endpoint=="IPbus_FIFO_DATA"){ address="000000F0";}
-        else if(endpoint=="EVENTS_COUNT"){ address="000000F1";}
-        else if(endpoint=="MCODE_TIME"){ address="000000F7";}
-        else if(endpoint=="FW_TIME"){ address="000000FF";}
-        else if(endpoint=="TEMPERATURE"){ address="00000005";}
-        else if(endpoint=="MODES_STATUS"){ address="000000E8";}
-        else if(endpoint=="FPGA_TEMP"){ address="000000FC";}
-        else if(endpoint=="1VPOWER"){ address="000000FD";}
-        else if(endpoint=="18VPOWER"){ address="000000FE";}
+    ||endpoint=="FPGA_STATUS"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TEMP"){
         vector<string> parameters = Utility::splitString(input, ",");
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -278,7 +251,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="TRIGGERS_OUTPUTS_MODE"){
-        address="0000006A";
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -314,7 +286,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="COUNTERS_UPD_RATE"){
-        address="00000050";
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -333,13 +304,7 @@ string Default2::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="DG_BUNCH_PATTERN"||endpoint=="TG_SINGLE_VALUE"||endpoint=="TG_PATTERN_1"||endpoint=="TG_PATTERN_1"||endpoint=="TG_CONT_VALUE"){
-        if(endpoint=="TG_SINGLE_VALUE"){ address="000000DB";}
-        else if(endpoint=="DG_BUNCH_PATTERN"){ address="000000DA";}
-        else if(endpoint=="TG_PATTERN_1"){ address="000000DC";}
-        else if(endpoint=="TG_PATTERN_0"){ address="000000DD";}
-        else if(endpoint=="TG_CONT_VALUE"){ address="000000DE";}
-
+    else if(endpoint=="DG_BUNCH_PATTERN"||endpoint=="TG_SINGLE_VALUE"||endpoint=="TG_PATTERN_1"||endpoint=="TG_PATTERN_0"||endpoint=="TG_CONT_VALUE"){
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -353,7 +318,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="EMULATION_RATE"){
-        address="000000DF";
         int indexTemp = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -375,8 +339,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="SPI_MASK"){
-        address="0000001E";
-
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -391,7 +353,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="TRIGGERS_SUPPRESSION_CONTROL"){
-        address="0000001F";
         int index = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -413,7 +374,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="GENERATOR_FREQ_OFFSET"){
-        address="000000E0";
         int index = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -440,12 +400,6 @@ string Default2::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="LASER_PATTERN_1"||endpoint=="LASER_PATTERN_0"){
-        if(endpoint=="LASER_PATTERN_0"){
-            address="0000001D";
-        }
-        else if(endpoint=="LASER_PATTERN_1"){
-            address="0000001C";
-        }
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -465,9 +419,15 @@ string Default2::processInputMessage(string input) {
         }
         return sequence;
     }
+    else if(endpoint=="LASER_FREQUENCY"){
+        //float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+        //long long tempValue = std::stoll(value.substr(2,6), nullptr, 16);
+        //float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
+        //float laserFrequency = std::stof(parameters[0]);
+        //laserFrequency = 
+    }
     return sequence;
 }
-
 
 
 string Default2::processOutputMessage(string output) {
@@ -515,7 +475,7 @@ string Default2::processOutputMessage(string output) {
         tempValue = tempValue*phaseStep_ns;
         return std::to_string(tempValue);
     }
-    else if(endpoint=="LASER_DIVIDER"){
+    else if(endpoint=="LASER_DIVIDER"||endpoint=="LASER_FREQUENCY"){
         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
         long long tempValue = std::stoll(value.substr(2,6), nullptr, 16);
         float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);

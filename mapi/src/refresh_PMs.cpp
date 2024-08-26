@@ -15,6 +15,8 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include "SWT_creator.h"
+
 
 RefreshPMs::RefreshPMs() {
 
@@ -22,17 +24,60 @@ RefreshPMs::RefreshPMs() {
         Refresh PMs initialize vector of services names and create sequence string to be sent to ALF to get values for each service 
     */
 
+    std::string fileName = "detector_type.cfg";
+    boost::property_tree::ptree tree;
+
+
+    if (!boost::filesystem::exists(fileName)) {
+        fileName = "./configuration/" + fileName;
+    }
+
+    std::vector<std::string> prefixesPM = {"PMA0", "PMC0"}, addresses = {"02", "16"};
+
+    try{
+        boost::property_tree::ini_parser::read_ini(fileName, tree);
+
+        /*const std::vector<std::string> prefixesMaxTest = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
+        const std::vector<std::string> addressesMaxTest = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
+        const std::vector<std::string> prefixesFT0 = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8"};
+        const std::vector<std::string> addressesFT0 = {"02", "16", "04", "18", "06", "1A", "08", "1C", "0A", "1E", "0C", "20", "0E", "22", "10", "24", "12", "26"};
+          */
+
+        for (const auto& section : tree) {
+            if(section.first=="CONFIG"){
+                for (const auto& key_value : section.second) {
+                    if(key_value.first=="TYPE"){
+                        
+                    }
+                    else if(key_value.first=="PM_NAMES"){
+                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
+                        prefixesPM.clear();
+                        for(auto name : names){
+                            prefixesPM.push_back(name);
+                        }
+                    }
+                    else if(key_value.first=="PM_ADDRESSES"){
+                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
+                        addresses.clear();
+                        for(auto name : names){
+                            addresses.push_back(name);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch(exception& e){
+        Print::PrintInfo("error during creating sequence refresh TCM");
+        Print::PrintError(e.what());
+    }
+
     firstTime=true;
-    //const std::string prefixesPM[20] = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
-    //const std::string addresses[20] = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
-    const std::string prefixesPM[2] = {"PMA0", "PMC0"};
-    const std::string addresses[2] = {"02", "16"};
-    int arraySize = sizeof(prefixesPM)/sizeof(string);
+    int arraySize = prefixesPM.size();
     std::string serviceName="PM/";
     sequence="reset";
 
-    std::string fileName = "refresh_PMs.cfg";
-    boost::property_tree::ptree tree;
+    fileName = "refresh_PMs.cfg";
 
     if (!boost::filesystem::exists(fileName)) {
         fileName = "./configuration/" + fileName;
@@ -54,6 +99,7 @@ RefreshPMs::RefreshPMs() {
                 for (const auto& key_value : section.second) {
                     sequence+="\n0x0000000"+addressParameter+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
                     services.push_back(serviceName+key_value.second.get_value<std::string>());
+                    tcm.addresses[serviceName+key_value.second.get_value<std::string>()]=addressParameter+key_value.first.substr(key_value.first.length()-2);
                 }
             }
         }

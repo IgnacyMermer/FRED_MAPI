@@ -11,7 +11,6 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <sstream>
 
 
 namespace fs = boost::filesystem;
@@ -37,11 +36,8 @@ void InitFred::processExecution(){
     try{
         response.erase(remove(response.begin(), response.end(), '\n'), response.end());
         response = response.substr(8);
-        Print::PrintInfo("response");
-        Print::PrintInfo(response.substr(13, 8));
         delayA = stoll(response.substr(13, 8), nullptr, 16);
         response = response.substr(22);
-        Print::PrintInfo(response.substr(13, 8));
         delayC = stoll(response.substr(13, 8), nullptr, 16);
     }
     catch(exception& e){
