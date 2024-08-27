@@ -49,7 +49,7 @@ void InitGBT::processExecution() {
     sequence="reset";
     for(int i=0; i<20; ++i){
         if(!(pmMaskSpi>>i & 1)){
-            SWT_creator::sequenceOperation3(i, "0000001E", tempStr);
+            SWT_creator::sequenceOperationRMWOR(i, "0000001E", tempStr);
             sequence+=tempStr.substr(5);
         }
     }
@@ -64,19 +64,20 @@ void InitGBT::processExecution() {
                 response=response.substr(0, response.length()-1);
             }
             if(response=="failure"||(response.length()>10&&response.substr(response.length()-8)=="FFFFFFFF")){
-                SWT_creator::sequenceOperation2(i, "0000001E", tempStr);
+                SWT_creator::sequenceOperationRMWAND(i, "0000001E", tempStr);
                 sequence+=tempStr.substr(5);
             }
         }
         catch(exception& e){
             Print::PrintError("error index "+std::to_string(i));
         }
-        
     }
+    
+    this->executeAlfSequence(sequence);
 
-    sequence = "reset\n001000000D800100000,write\n0x001000000D900000040,write\n0x001000000DA00000000,write\n0x001000000DB00000000,write\n0x001000000DC00000000,write\n0x001000000DD00000000,write\n0x001000000DE00000000,write\n0x001000000DF00000000,write\n0x001000000E000000000,write\n0x001000000E100000000,write";
-    sequence += "\n001000002D800100000,write\n0x001000002D900000040,write\n0x001000002DA00000000,write\n0x001000002DB00000000,write\n0x001000002DC00000000,write\n0x001000002DD00000000,write\n0x001000002DE00000000,write\n0x001000002DF00000000,write\n0x001000002E000000000,write\n0x001000002E100000000,write";
-    sequence += "\n001000016D800100000,write\n0x001000016D900000040,write\n0x001000016DA00000000,write\n0x001000016DB00000000,write\n0x001000016DC00000000,write\n0x001000016DD00000000,write\n0x001000016DE00000000,write\n0x001000016DF00000000,write\n0x001000016E000000000,write\n0x001000016E100000000,write";
+    sequence = "reset\n0x001000000D800100000,write\n0x001000000D900000040,write\n0x001000000DA00000000,write\n0x001000000DB00000000,write\n0x001000000DC00000000,write\n0x001000000DD00000000,write\n0x001000000DE00000000,write\n0x001000000DF00000000,write\n0x001000000E000000000,write\n0x001000000E100000000,write";
+    sequence += "\n0x001000002D800100000,write\n0x001000002D900000040,write\n0x001000002DA00000000,write\n0x001000002DB00000000,write\n0x001000002DC00000000,write\n0x001000002DD00000000,write\n0x001000002DE00000000,write\n0x001000002DF00000000,write\n0x001000002E000000000,write\n0x001000002E100000000,write";
+    sequence += "\n0x001000016D800100000,write\n0x001000016D900000040,write\n0x001000016DA00000000,write\n0x001000016DB00000000,write\n0x001000016DC00000000,write\n0x001000016DD00000000,write\n0x001000016DE00000000,write\n0x001000016DF00000000,write\n0x001000016E000000000,write\n0x001000016E100000000,write";
     response = this->executeAlfSequence(sequence);
     this->publishAnswer("updated");
 }

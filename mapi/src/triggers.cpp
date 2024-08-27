@@ -27,7 +27,7 @@ string Triggers::processInputMessage(string input) {
         sequence = "reset\n0x000"+address+"00000000,write\nread";
     }
     else if(parameters.size()>1&&parameters[1]=="1"){
-        SWT_creator::sequenceOperation1(std::stoi(parameters[0]), address, sequence);
+        SWT_creator::sequenceOperationWrite(std::stoi(parameters[0]), address, sequence);
     }
     else if(parameters.size()>2&&(parameters[0]=="0"||parameters[0]=="1")){
         SWT_creator::sequenceOperationBits(std::stoi(parameters[2]), 0, 0xFFFFFFFC, address, sequence);
@@ -45,10 +45,10 @@ string Triggers::processInputMessage(string input) {
         SWT_creator::sequenceOperationBits(std::stoi(parameters[2]), 12, 0xFFFFCFFF, address, sequence);
     }
     else if(parameters.size()>1&&parameters[1]=="3"){
-        SWT_creator::sequenceOperation3(std::stoi(parameters[0]), address, sequence);
+        SWT_creator::sequenceOperationRMWOR(std::stoi(parameters[0]), address, sequence);
     }
     else if(parameters.size()>1&&parameters[1]=="2"){
-        SWT_creator::sequenceOperation2(std::stoi(parameters[0]), address, sequence);
+        SWT_creator::sequenceOperationRMWAND(std::stoi(parameters[0]), address, sequence);
     }
     else{
         noRpcRequest=true;

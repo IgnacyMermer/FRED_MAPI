@@ -4,7 +4,7 @@ class SWT_creator{
 public:
     SWT_creator();
 
-    static void sequenceOperation1(long long num, std::string address, std::string& sequence){
+    static void sequenceOperationWrite(long long num, std::string address, std::string& sequence){
     std::stringstream ss;
     ss << std::hex << num;
     std::string hex_str = ss.str();
@@ -19,7 +19,7 @@ public:
     sequence="reset\n0x001"+address+data+",write\nread";
 }
 
-static void sequenceOperation2(int num, std::string address, std::string& sequence){
+static void sequenceOperationRMWAND(int num, std::string address, std::string& sequence){
     int temp = 0xFFFFFFFF;
     temp-=(1 << num);
     std::stringstream ss;
@@ -28,7 +28,7 @@ static void sequenceOperation2(int num, std::string address, std::string& sequen
     sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
 }
 
-static void sequenceOperation3(int num, std::string address, std::string& sequence){
+static void sequenceOperationRMWOR(int num, std::string address, std::string& sequence){
     std::stringstream ss;
     ss << std::hex << (1 << num);
     std::string hex_str = ss.str();
@@ -53,10 +53,10 @@ static void sequenceOperationBits(int num, int power, int maskNumber, std::strin
     }
     data+=hex_str;
     long long temp=num*std::pow(2,power);
-    std::stringstream ss2;
-    ss2 << std::hex << temp;
+    ss.str("");
+    ss << std::hex << temp;
     std::string data2 = "";
-    hex_str = ss2.str();
+    hex_str = ss.str();
     if(hex_str.length()>8){
         hex_str=hex_str.substr(hex_str.length()-4);
     }

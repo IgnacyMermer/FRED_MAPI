@@ -19,11 +19,10 @@ HistogramReader::HistogramReader() {
 string HistogramReader::processInputMessage(string input) {
     vector<string> parameters = Utility::splitString(input, ",");
     sequence="reset";
-    int number = 0x3000;
+    int number = 0x4000;
+    //number+=1600;
     std::stringstream ss;
-    ss << std::hex << number;
-    std::string hex_str = ss.str();
-    for(int i=0;i<500;i++){
+    for(int i=0;i<800;i++){
         ss.str("");
         ss << std::hex << number;
         std::string hex_str = ss.str();
@@ -40,9 +39,9 @@ string HistogramReader::processOutputMessage(string output) {
     try {
         std::vector<std::string> strings = Utility::splitString(output,"\n");
         for(int i=0;i<strings.size(); i++){
-            if(strings[i].length()>15&&strings[i].substr(13,8)!="0"){
+            if(strings[i].length()>15&&strings[i].substr(13,8)!="00000000"){
                 count++;
-                Print::PrintInfo(strings[i].substr(13,8)+" - "+SWT_creator::numberLetter(i));
+                Print::PrintInfo(strings[i].substr(13,8)+" - "+std::to_string(i));
             }
         }
         Print::PrintInfo("count: "+std::to_string(count));

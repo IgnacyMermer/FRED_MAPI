@@ -12,4 +12,7 @@ public:
     float finalValue;
     bool firstTime;
     string sequence;
+    std::vector<string> servicesCnt, servicesRate;
+    std::vector<long long> oldTimes, oldValues;
+    std::vector<float> oldRates;
 };
