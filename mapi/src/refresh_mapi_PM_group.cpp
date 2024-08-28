@@ -132,16 +132,8 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
                 value = output.substr(13, 8);
                 output = output.substr(21);
                 hexValue = stoll(value, nullptr, 16);
-                if (hexValue > 50000&&(services[count].find("CHANNEL_SETTINGS",0)!= std::string::npos||services[count].find("ADC0_BASELINE")!= std::string::npos
-                    ||services[count].find("ADC1_BASELINE")!= std::string::npos||services[count].find("ADC0_MEAN")!= std::string::npos||services[count].find("ADC1_MEAN")!= std::string::npos
-                    ||services[count].find("ADC1_MEAN")!= std::string::npos||services[count].find("CFD_ZERO")!= std::string::npos||services[count].find("ADC_ZERO")!= std::string::npos
-                    ||services[count].find("TEMPERATURE")!= std::string::npos)) {
-                    int16_t x = stoi(value, nullptr, 16);
-                    hexValue=-(~x+1);
-                }
 
                 updateService=false;
-                firstTime=true;
                 
                 if(firstTime){
                     oldValues.push_back(hexValue);
@@ -153,7 +145,8 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
                 }
 
                 if(updateService){
-                    if(count<192){
+                    if(count<250){
+                    //requests.push_back(make_pair(services[count], "FRED,"+std::to_string(hexValue)));
                         requests.push_back(make_pair(services[count], "0,0"));
                     }
                 }

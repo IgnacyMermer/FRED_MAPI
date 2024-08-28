@@ -11,5 +11,9 @@ public:
 
 private:
     Fred* fred;
+    float hexValue;
     bool firstTime;
+    string sequence;
+    std::vector<std::string> services;
+    std::vector<long long> oldValues;
 };

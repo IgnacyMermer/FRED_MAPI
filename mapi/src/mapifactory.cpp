@@ -105,6 +105,33 @@ void MapiFactory::generateObjects(){
         Print::PrintError(e.what());
     }
 
+
+    std::string serviceName=fred->Name()+"/READOUTCARDS/TCM0/";
+
+    fileName = "TCM_defaults.cfg";
+
+    if (!boost::filesystem::exists(fileName)) {
+        fileName = "./configuration/" + fileName;
+    }
+
+    try{
+        boost::property_tree::ini_parser::read_ini(fileName, tree);
+        
+        for (const auto& section : tree) {
+            if(section.first=="TCM"){
+                for (const auto& key_value : section.second) {
+                    TCM_default* tcmDefault = new TCM_default(key_value.second.get_value<std::string>());
+                    this->fred->registerMapiObject(serviceName+key_value.second.get_value<std::string>(), tcmDefault);
+                    this->mapiObjects.push_back(tcmDefault);
+                }
+            }
+        }
+    }
+    catch(exception& e){
+        Print::PrintInfo("error during creating sequence refresh TCM");
+        Print::PrintError(e.what());
+    }
+
     int arraySize = prefixes.size();
 
     WorkStatus* workStatus = new WorkStatus();
@@ -113,15 +140,6 @@ void MapiFactory::generateObjects(){
     BoardStatus* boardStatus = new BoardStatus();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BOARD_STATUS", boardStatus);
     this->mapiObjects.push_back(boardStatus);
-    TCM_default* delayA = new TCM_default("DELAY_A");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/DELAY_A", delayA);
-    this->mapiObjects.push_back(delayA);
-    TCM_default* delayC = new TCM_default("DELAY_C");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/DELAY_C", delayC);
-    this->mapiObjects.push_back(delayC);
-    TCM_default* temperatureBoard = new TCM_default("TEMPERATURE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TEMPERATURE", temperatureBoard);
-    this->mapiObjects.push_back(temperatureBoard);;
     BoardType* boardType = new BoardType();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BOARD_TYPE", boardType);
     this->mapiObjects.push_back(boardType);
@@ -143,9 +161,6 @@ void MapiFactory::generateObjects(){
     RefreshData* refreshData = new RefreshData();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_DATA", refreshData);
     this->mapiObjects.push_back(refreshData);
-    TCM_default* triggers = new TCM_default("TRIGGERS_OUTPUTS_MODE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGERS_OUTPUTS_MODE", triggers);
-    this->mapiObjects.push_back(triggers);
     TriggerRand* triggerRand5 = new TriggerRand(std::string("TRIGGER5_RAND"));
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGER5_RAND", triggerRand5);
     this->mapiObjects.push_back(triggerRand5);
@@ -221,138 +236,9 @@ void MapiFactory::generateObjects(){
     PM_status* pmC9Status = new PM_status(std::string("C9"));
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/PM_LINK_C9", pmC9Status);
     this->mapiObjects.push_back(pmC9Status);
-    TCM_default* vTimeLow = new TCM_default("VTIME_LOW");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/VTIME_LOW", vTimeLow);
-    this->mapiObjects.push_back(vTimeLow);
-    TCM_default* vTimeHigh = new TCM_default("VTIME_HIGH");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/VTIME_HIGH", vTimeHigh);
-    this->mapiObjects.push_back(vTimeHigh);
-    TCM_default* scLevelA = new TCM_default("SC_LEVEL_A");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SC_LEVEL_A", scLevelA);
-    this->mapiObjects.push_back(scLevelA);
-    TCM_default* scLevelC = new TCM_default("SC_LEVEL_C");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SC_LEVEL_C", scLevelC);
-    this->mapiObjects.push_back(scLevelC);
-    TCM_default* cLevelA = new TCM_default("C_LEVEL_A");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/C_LEVEL_A", cLevelA);
-    this->mapiObjects.push_back(cLevelA);
-    TCM_default* cLevelC = new TCM_default("C_LEVEL_C");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/C_LEVEL_C", cLevelC);
-    this->mapiObjects.push_back(cLevelC);
-    TCM_default* trigger1Cnt = new TCM_default("TRIGGER1_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGER1_CNT", trigger1Cnt);
-    this->mapiObjects.push_back(trigger1Cnt);
-    TCM_default* trigger2Cnt = new TCM_default("TRIGGER2_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGER2_CNT", trigger2Cnt);
-    this->mapiObjects.push_back(trigger2Cnt);
-    TCM_default* trigger3Cnt = new TCM_default("TRIGGER3_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGER3_CNT", trigger3Cnt);
-    this->mapiObjects.push_back(trigger3Cnt);
-    TCM_default* trigger4Cnt = new TCM_default("TRIGGER4_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGER4_CNT", trigger4Cnt);
-    this->mapiObjects.push_back(trigger4Cnt);
-    TCM_default* trigger5Cnt = new TCM_default("TRIGGER5_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGER5_CNT", trigger5Cnt);
-    this->mapiObjects.push_back(trigger5Cnt);
-    TCM_default* mainPanel = new TCM_default("MODES_STATUS");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/MODES_STATUS", mainPanel);
-    this->mapiObjects.push_back(mainPanel);
-    TCM_default* delayLaser = new TCM_default("LASER_DELAY");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/LASER_DELAY", delayLaser);
-    this->mapiObjects.push_back(delayLaser);
-    TCM_default* sideAStatus = new TCM_default("SIDE_A_STATUS");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SIDE_A_STATUS", sideAStatus);
-    this->mapiObjects.push_back(sideAStatus);
-    TCM_default* sideCStatus = new TCM_default("SIDE_C_STATUS");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SIDE_C_STATUS", sideCStatus);
-    this->mapiObjects.push_back(sideCStatus);
-    TCM_default* countUpdRates = new TCM_default("COUNTERS_UPD_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/COUNTERS_UPD_RATE", countUpdRates);
-    this->mapiObjects.push_back(countUpdRates);
-    TCM_default* trigger1Rate = new TCM_default("TRG_C_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRG_C_RATE", trigger1Rate);
-    this->mapiObjects.push_back(trigger1Rate);
-    TCM_default* trigger2Rate = new TCM_default("TRG_SC_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRG_SC_RATE", trigger2Rate);
-    this->mapiObjects.push_back(trigger2Rate);
-    TCM_default* trigger3Rate = new TCM_default("TRG_V_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRG_V_RATE", trigger3Rate);
-    this->mapiObjects.push_back(trigger3Rate);
-    TCM_default* trigger4Rate = new TCM_default("TRG_ORC_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRG_ORC_RATE", trigger4Rate);
-    this->mapiObjects.push_back(trigger4Rate);
-    TCM_default* trigger5Rate = new TCM_default("TRG_ORA_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRG_ORA_RATE", trigger5Rate);
-    this->mapiObjects.push_back(trigger5Rate);
-    TCM_default* bkgrnd0Cnt = new TCM_default("BKGRND0_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND0_CNT", bkgrnd0Cnt);
-    this->mapiObjects.push_back(bkgrnd0Cnt);
-    TCM_default* bkgrnd1Cnt = new TCM_default("BKGRND1_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND1_CNT", bkgrnd1Cnt);
-    this->mapiObjects.push_back(bkgrnd1Cnt);
-    TCM_default* bkgrnd2Cnt = new TCM_default("BKGRND2_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND2_CNT", bkgrnd2Cnt);
-    this->mapiObjects.push_back(bkgrnd2Cnt);
-    TCM_default* bkgrnd3Cnt = new TCM_default("BKGRND3_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND3_CNT", bkgrnd3Cnt);
-    this->mapiObjects.push_back(bkgrnd3Cnt);
-    TCM_default* bkgrnd4Cnt = new TCM_default("BKGRND4_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND4_CNT", bkgrnd4Cnt);
-    this->mapiObjects.push_back(bkgrnd4Cnt);
-    TCM_default* bkgrnd5Cnt = new TCM_default("BKGRND5_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND5_CNT", bkgrnd5Cnt);
-    this->mapiObjects.push_back(bkgrnd5Cnt);
-    TCM_default* bkgrnd6Cnt = new TCM_default("BKGRND6_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND6_CNT", bkgrnd6Cnt);
-    this->mapiObjects.push_back(bkgrnd6Cnt);
-    TCM_default* bkgrnd7Cnt = new TCM_default("BKGRND7_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND7_CNT", bkgrnd7Cnt);
-    this->mapiObjects.push_back(bkgrnd7Cnt);
-    TCM_default* bkgrnd8Cnt = new TCM_default("BKGRND8_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND8_CNT", bkgrnd8Cnt);
-    this->mapiObjects.push_back(bkgrnd8Cnt);
-    TCM_default* bkgrnd9Cnt = new TCM_default("BKGRND9_CNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BKGRND9_CNT", bkgrnd9Cnt);
-    this->mapiObjects.push_back(bkgrnd9Cnt);
     RefreshCounters* refreshCounters = new RefreshCounters();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_COUNTERS", refreshCounters);
     this->mapiObjects.push_back(refreshCounters);
-    TCM_default* fpgaTemp = new TCM_default("FPGA_TEMP");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/FPGA_TEMP", fpgaTemp);
-    this->mapiObjects.push_back(fpgaTemp);
-    TCM_default* vPower1 = new TCM_default("1VPOWER");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/1VPOWER", vPower1);
-    this->mapiObjects.push_back(vPower1);
-    TCM_default* vPower18 = new TCM_default("18VPOWER");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/18VPOWER", vPower18);
-    this->mapiObjects.push_back(vPower18);
-    TCM_default* modeSettings = new TCM_default("MODE_SETTINGS");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/MODE_SETTINGS", modeSettings);
-    this->mapiObjects.push_back(modeSettings);
-    TCM_default* laserDivider = new TCM_default("LASER_DIVIDER");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/LASER_DIVIDER", laserDivider);
-    this->mapiObjects.push_back(laserDivider);
-    TCM_default* extSwitches = new TCM_default("EXT_SW");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/EXT_SW", extSwitches);
-    this->mapiObjects.push_back(extSwitches);
-    TCM_default* attenuator = new TCM_default("ATTENUATOR");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/ATTENUATOR", attenuator);
-    this->mapiObjects.push_back(attenuator);
-    TCM_default* triggerModes = new TCM_default("MODE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/MODE", triggerModes);
-    this->mapiObjects.push_back(triggerModes);
-    TCM_default* dsTriggerMask = new TCM_default("DATA_SEL_TRG_MASK");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/DATA_SEL_TRG_MASK", dsTriggerMask);
-    this->mapiObjects.push_back(dsTriggerMask);
-    TCM_default* bcidOffset = new TCM_default("BCID_OFFSET");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/BCID_OFFSET", bcidOffset);
-    this->mapiObjects.push_back(bcidOffset);
-    TCM_default* dgTriggerMask = new TCM_default("DG_TRG_RESPOND_MASK");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/DG_TRG_RESPOND_MASK", dgTriggerMask);
-    this->mapiObjects.push_back(dgTriggerMask);
-    TCM_default* systemId = new TCM_default("RDH_FIELDS");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/RDH_FIELDS", systemId);
-    this->mapiObjects.push_back(systemId);
     /*TCM_default* trgPatternLSB = new TCM_default("TRG_CONT_PATTERN_LSB");
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRG_CONT_PATTERN_LSB", trgPatternLSB);
     this->mapiObjects.push_back(trgPatternLSB);
@@ -362,82 +248,41 @@ void MapiFactory::generateObjects(){
     InitFred* initFred = new InitFred();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/INIT_FRED", initFred);
     this->mapiObjects.push_back(initFred);
-    TCM_default* cruOrbit = new TCM_default("CRU_ORBIT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/CRU_ORBIT", cruOrbit);
-    this->mapiObjects.push_back(cruOrbit);
-    TCM_default* cruBcFifos = new TCM_default("CRU_BC");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/CRU_BC", cruBcFifos);
-    this->mapiObjects.push_back(cruBcFifos);
-    TCM_default* fifoCount = new TCM_default("FIFO_COUNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/FIFO_COUNT", fifoCount);
-    this->mapiObjects.push_back(fifoCount);
-    TCM_default* selFirstHitDroppedOrbit = new TCM_default("SEL_FIRST_HIT_DROPPED_ORBIT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SEL_FIRST_HIT_DROPPED_ORBIT", selFirstHitDroppedOrbit);
-    this->mapiObjects.push_back(selFirstHitDroppedOrbit);
-    TCM_default* selLastHitDroppedOrbit = new TCM_default("SEL_LAST_HIT_DROPPED_ORBIT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SEL_LAST_HIT_DROPPED_ORBIT", selLastHitDroppedOrbit);
-    this->mapiObjects.push_back(selLastHitDroppedOrbit);
-    TCM_default* selHitsDropped = new TCM_default("SEL_HITS_DROPPED");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SEL_HITS_DROPPED", selHitsDropped);
-    this->mapiObjects.push_back(selHitsDropped);
-    TCM_default* readoutRate = new TCM_default("READOUT_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/READOUT_RATE", readoutRate);
-    this->mapiObjects.push_back(readoutRate);
-    TCM_default* IPbusFIFOdata = new TCM_default("IPbus_FIFO_DATA");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/IPbus_FIFO_DATA", IPbusFIFOdata);
-    this->mapiObjects.push_back(IPbusFIFOdata);
-    TCM_default* eventsCount = new TCM_default("EVENTS_COUNT");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/EVENTS_COUNT", eventsCount);
-    this->mapiObjects.push_back(eventsCount);
-    TCM_default* mcodeTime = new TCM_default("MCODE_TIME");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/MCODE_TIME", mcodeTime);
-    this->mapiObjects.push_back(mcodeTime);
-    TCM_default* fwTime = new TCM_default("FW_TIME");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/FW_TIME", fwTime);
-    this->mapiObjects.push_back(fwTime);
     RefreshMapiGroup *refreshMapiGroup = new RefreshMapiGroup(this->fred);
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_MAPI_GROUP",refreshMapiGroup);
     this->mapiObjects.push_back(refreshMapiGroup);
     ElectronicStatus* electronicStatus = new ElectronicStatus();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/ELECTRONIC_STATUS", electronicStatus);
     this->mapiObjects.push_back(electronicStatus);
-    TCM_default* dgBunchPattern = new TCM_default("DG_BUNCH_PATTERN");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/DG_BUNCH_PATTERN", dgBunchPattern);
-    this->mapiObjects.push_back(dgBunchPattern);
-    TCM_default* tgSingleValue = new TCM_default("TG_SINGLE_VALUE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TG_SINGLE_VALUE", tgSingleValue);
-    this->mapiObjects.push_back(tgSingleValue);
-    TCM_default* tgPattern1 = new TCM_default("TG_PATTERN_1");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TG_PATTERN_1", tgPattern1);
-    this->mapiObjects.push_back(tgPattern1);
-    TCM_default* tgPattern0 = new TCM_default("TG_PATTERN_0");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TG_PATTERN_0", tgPattern0);
-    this->mapiObjects.push_back(tgPattern0);
-    TCM_default* tgContValue = new TCM_default("TG_CONT_VALUE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TG_CONT_VALUE", tgContValue);
-    this->mapiObjects.push_back(tgContValue);
-    TCM_default* emulationRate = new TCM_default("EMULATION_RATE");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/EMULATION_RATE", emulationRate);
-    this->mapiObjects.push_back(emulationRate);
-    TCM_default* spiMask = new TCM_default("SPI_MASK");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/SPI_MASK", spiMask);
-    this->mapiObjects.push_back(spiMask);
-    TCM_default* triggersSuppressionControl = new TCM_default("TRIGGERS_SUPPRESSION_CONTROL");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGERS_SUPPRESSION_CONTROL", triggersSuppressionControl);
-    this->mapiObjects.push_back(triggersSuppressionControl);
-    TCM_default* averageTime = new TCM_default("AVERAGE_TIME");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/AVERAGE_TIME", averageTime);
-    this->mapiObjects.push_back(averageTime);
-    TCM_default* generatorFreqOffset = new TCM_default("GENERATOR_FREQ_OFFSET");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/GENERATOR_FREQ_OFFSET", generatorFreqOffset);
-    this->mapiObjects.push_back(generatorFreqOffset);
-    TCM_default* tcmCountersValues = new TCM_default("TCM_COUNTERS_VALUES");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TCM_COUNTERS_VALUES", tcmCountersValues);
-    this->mapiObjects.push_back(tcmCountersValues);
     RefreshPMs* refreshPMs = new RefreshPMs();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_PMS", refreshPMs);
     this->mapiObjects.push_back(refreshPMs);
     for(int j=0; j<arraySize; j++){
+        std::string serviceName=fred->Name()+"/PM/"+prefixes[j]+"/";
+
+        fileName = "PM_defaults.cfg";
+
+        if (!boost::filesystem::exists(fileName)) {
+            fileName = "./configuration/" + fileName;
+        }
+
+        try{
+            boost::property_tree::ini_parser::read_ini(fileName, tree);
+            
+            for (const auto& section : tree) {
+                if(section.first.substr(0,2)=="PM"){
+                    for (const auto& key_value : section.second) {
+                        PM_default* pmDefault = new PM_default(key_value.second.get_value<std::string>(), addresses[j], prefixes[j]);
+                        this->fred->registerMapiObject(serviceName+key_value.second.get_value<std::string>(), pmDefault);
+                        this->mapiObjects.push_back(pmDefault);
+                    }
+                }
+            }
+        }
+        catch(exception& e){
+            Print::PrintInfo("error during creating sequence refresh TCM");
+            Print::PrintError(e.what());
+        }
         PM_default*  trgSettings = new PM_default("TRG_SETTINGS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TRG_SETTINGS", trgSettings);
         this->mapiObjects.push_back(trgSettings);
@@ -771,12 +616,6 @@ void MapiFactory::generateObjects(){
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FPGA_TIMESTAMP", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
     }
-    TCM_default* lastPattern1 = new TCM_default("LASER_PATTERN_1");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/LASER_PATTERN_1", lastPattern1);
-    this->mapiObjects.push_back(lastPattern1);
-    TCM_default* lastPattern0 = new TCM_default("LASER_PATTERN_0");
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/LASER_PATTERN_0", lastPattern0);
-    this->mapiObjects.push_back(lastPattern1);
     RefreshPMCounters* refreshPMCounters = new RefreshPMCounters();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_PM_COUNTERS", refreshPMCounters);
     this->mapiObjects.push_back(refreshPMCounters);

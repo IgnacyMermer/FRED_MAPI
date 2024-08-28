@@ -36,10 +36,15 @@ string PM_default::processInputMessage(string input) {
     std::string address="", sequence="";
     vector<string> parameters = Utility::splitString(input, ",");
     address = "0000"+tcm.addresses["PM/"+pmName+"/"+endpoint];
+    if(input.length()>5&&input.substr(0,5)=="FRED,"){
+        this->publishAnswer(input.substr(5));
+        noRpcRequest=true;
+        return "0";
+    }
     if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0||endpoint.rfind("TDC_3_PHASE_TUNING",0)==0||endpoint.rfind("RAW_TDC_DATA",0)==0
     ||endpoint.rfind("ADC0_DISPERSION",0)==0||endpoint.rfind("ADC1_DISPERSION",0)==0||endpoint.rfind("ADC0_MEAN",0)==0||endpoint.rfind("ADC1_MEAN",0)==0
-    ||endpoint.rfind("COUNT_CFD_HITS",0)==0||endpoint.rfind("ADC0_BASELINE",0)==0||endpoint.rfind("ADC1_BASELINE",0)==0||endpoint=="TEMPERATURE"
-    ||endpoint=="BOARD_TYPE"||endpoint=="LAST_RESTART_REASON"||endpoint=="FPGA_TEMP"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TIMESTAMP"){
+    ||endpoint.rfind("COUNT_CFD_HITS",0)==0||endpoint.rfind("COUNT_TRG_HITS",0)==0||endpoint.rfind("ADC0_BASELINE",0)==0||endpoint.rfind("ADC1_BASELINE",0)==0||endpoint=="TEMPERATURE"
+    ||endpoint=="BOARD_TYPE"||endpoint=="LAST_RESTART_REASON"||endpoint=="FPGA_TEMP"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TIMESTAMP"||endpoint=="ATX_TIMESTAMP"){
 
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -56,7 +61,7 @@ string PM_default::processInputMessage(string input) {
     ||endpoint=="SEL_HITS_DROPPED"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="CRU_BC"||endpoint=="CRU_ORBIT"
     ||endpoint=="DATA_SELECT_TRG_MASK"||endpoint=="DATA_BUNCH_PATTERN"||endpoint=="TRIGGER_SINGLE_VALUE"||endpoint=="TRIGGER_CONT_PATTERN_MSB"||endpoint=="TRIGGER_CONT_PATTERN_LSB"||endpoint=="TRIGGER_CONT_VALUE"
     ||endpoint=="GENERATORS_BUNCH_FREQ"||endpoint=="GENERATORS_FREQ_OFFSET"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0||endpoint=="TRIGGER_RESPOND_MASK"
-    ||endpoint=="LAST_RESTART_REASON"){
+    ||endpoint=="LAST_RESTART_REASON"||endpoint=="FW_UPGRADE_COMM"||endpoint=="FW_UPGRADE_DATA"||endpoint=="FW_UPGRADE_END"||endpoint=="FW_UPGRADE_STATUS"){
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -271,9 +276,6 @@ string PM_default::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="FIFO_COUNT"){
-        noRpcRequest=true;
-        this->publishAnswer("FIFO");
-        return "output";
         int index = SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -302,9 +304,6 @@ string PM_default::processOutputMessage(string output) {
         When ALF return output, program takes only value saved on last 8bits of read word. On some parameters in the following lines there are made some 
         calculations, in other case value is returned with no additional operations.
     */
-
-    Print::PrintInfo(output);
-    return "0";
 
     string value;
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());

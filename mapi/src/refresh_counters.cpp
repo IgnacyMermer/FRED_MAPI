@@ -133,9 +133,6 @@ string RefreshCounters::processOutputMessage(string output) {
         
       }
       firstTime=false;
-      //usleep(5000000);
-      //sleep(1);
-      //std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     }
     catch(exception &e){
       Print::PrintInfo(e.what());

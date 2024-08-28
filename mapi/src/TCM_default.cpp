@@ -21,7 +21,11 @@ string TCM_default::processInputMessage(string input) {
     std::string address="", sequence="";
     vector<string> parameters = Utility::splitString(input, ",");
     address = "0000"+tcm.addresses["READOUTCARDS/TCM0/"+endpoint];
-
+    if(input.length()>5&&input.substr(0,5)=="FRED,"){
+        this->publishAnswer(input.substr(5));
+        noRpcRequest=true;
+        return "0";
+    }
     if(endpoint=="VTIME_LOW"||endpoint=="VTIME_HIGH"){
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -41,6 +45,11 @@ string TCM_default::processInputMessage(string input) {
             sequence="";
         }
         return sequence;
+    }
+    else if(endpoint=="AVERAGE_TIME"){
+        if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
+            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        }
     }
     else if(endpoint=="SC_LEVEL_A"||endpoint=="SC_LEVEL_C"||endpoint=="C_LEVEL_A"||endpoint=="C_LEVEL_C"){
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
@@ -207,7 +216,8 @@ string TCM_default::processInputMessage(string input) {
     }
     else if(endpoint=="CRU_ORBIT"||endpoint=="CRU_BC"||endpoint=="FIFO_COUNT"||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"||endpoint=="SEL_HITS_DROPPED"
     ||endpoint=="READOUT_RATE"||endpoint=="IPbus_FIFO_DATA"||endpoint=="EVENTS_COUNT"||endpoint=="MCODE_TIME"||endpoint=="FW_TIME"||endpoint=="TEMPERATURE"||endpoint=="MODES_STATUS"
-    ||endpoint=="FPGA_STATUS"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TEMP"||endpoint.rfind("BKGRND",0)==0){
+    ||endpoint=="FPGA_STATUS"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TEMP"||endpoint.rfind("BKGRND",0)==0||endpoint=="TRIGGER5_CNT"||endpoint=="TRIGGER4_CNT"
+    ||endpoint=="TRIGGER3_CNT"||endpoint=="TRIGGER2_CNT"||endpoint=="TRIGGER1_CNT"){
         vector<string> parameters = Utility::splitString(input, ",");
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -438,6 +448,9 @@ string TCM_default::processOutputMessage(string output) {
     else if(endpoint=="TEMPERATURE"){
         return std::to_string(finalValue/10.);
     }
+    else if(endpoint=="AVERAGE_TIME"){
+        return "";
+    }
     else if(endpoint=="LASER_DELAY"){
         float tempValue = stoi(value, nullptr, 16);
         if (tempValue > 10000) {
@@ -462,8 +475,8 @@ string TCM_default::processOutputMessage(string output) {
     else if(endpoint=="DELAY_A"||endpoint=="DELAY_C"){
         finalValue = stoi(value, nullptr, 16);
         if (finalValue > 10000) {
-        int16_t x = stoi(value, nullptr, 16);
-        finalValue=-(~x+1);
+            int16_t x = stoi(value, nullptr, 16);
+            finalValue=-(~x+1);
         }
         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
         float halfBC_ns = 500. / systemClock_MHz;
@@ -471,8 +484,7 @@ string TCM_default::processOutputMessage(string output) {
         //(SERIAL_NUM ? 
         1024 ; 
         //: 1280);
-        finalValue = finalValue*phaseStep_ns;
-        return std::to_string(finalValue);
+        return std::to_string(finalValue*phaseStep_ns);
     }
     noReturn=false;
   }
