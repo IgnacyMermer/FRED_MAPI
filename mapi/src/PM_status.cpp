@@ -19,16 +19,8 @@ PM_status::PM_status(std::string endpointParam){
 
 string PM_status::processInputMessage(string input) {
     vector<string> parameters = Utility::splitString(input, ",");
-    std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/"+pmEndpoint];
+    std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/PM_LINK_"+pmEndpoint];
     if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-        if(pmEndpoint[0]=='A'){
-            address+="1";
-        }
-        else if(pmEndpoint[0]=='C'){
-            address+="3";
-        }
-        std::string temp(1, pmEndpoint[1]);
-        address+=temp;
         sequence = "reset\n0x000"+address+"00000000,write\nread";
     }
     else{

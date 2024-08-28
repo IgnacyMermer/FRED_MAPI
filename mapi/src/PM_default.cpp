@@ -36,73 +36,10 @@ string PM_default::processInputMessage(string input) {
     std::string address="", sequence="";
     vector<string> parameters = Utility::splitString(input, ",");
     address = "0000"+tcm.addresses["PM/"+pmName+"/"+endpoint];
-    if(endpoint=="TRG_SETTINGS"){
-        int index = SWT_creator::parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(index, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=0&&index<=7)){
-            SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFFF00, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(index, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(index, address, sequence);
-        }
-        else{
-            this->publishError("Wrong parameters");
-            noRpcRequest=true;
-            sequence="";
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("CHANNEL_SETTINGS",0)==0){
-        if(!((endpoint[endpoint.length()-1]>='1'&&endpoint[endpoint.length()-1]<='9')||(endpoint[endpoint.length()-1]>='A'&&endpoint[endpoint.length()-1]<='C'))){
-            noRpcRequest=true;
-            return "";
-        }
-        int index = SWT_creator::parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(index, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=0&&index<=11)){
-            SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFF000, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(index, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(index, address, sequence);
-        }
-        else{
-            this->publishError("Wrong parameters");
-            noRpcRequest=true;
-            sequence="";
-        }
-        Print::PrintInfo(sequence);
-        return sequence;
-    }
-    else if(endpoint.rfind("ADC0_BASELINE",0)==0||endpoint.rfind("ADC1_BASELINE",0)==0){
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            this->publishError("Readonly parameter");
-            noRpcRequest=true;
-            sequence="";
-        }
-        return sequence;
-    }
-    else if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0||endpoint.rfind("TDC_3_PHASE_TUNING",0)==0||endpoint.rfind("RAW_TDC_DATA",0)==0
+    if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0||endpoint.rfind("TDC_3_PHASE_TUNING",0)==0||endpoint.rfind("RAW_TDC_DATA",0)==0
     ||endpoint.rfind("ADC0_DISPERSION",0)==0||endpoint.rfind("ADC1_DISPERSION",0)==0||endpoint.rfind("ADC0_MEAN",0)==0||endpoint.rfind("ADC1_MEAN",0)==0
-    ||endpoint.rfind("COUNT_CFD_HITS",0)==0){
+    ||endpoint.rfind("COUNT_CFD_HITS",0)==0||endpoint.rfind("ADC0_BASELINE",0)==0||endpoint.rfind("ADC1_BASELINE",0)==0||endpoint=="TEMPERATURE"
+    ||endpoint=="BOARD_TYPE"||endpoint=="LAST_RESTART_REASON"||endpoint=="FPGA_TEMP"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TIMESTAMP"){
 
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -111,6 +48,61 @@ string PM_default::processInputMessage(string input) {
             noRpcRequest=true;
             sequence="";
             this->publishError("Readonly parameter");
+        }
+        return sequence;
+    }
+    else if(endpoint=="CHANNEL_ADC_BASELINE"||endpoint.rfind("CFD_THRESHOLD",0)==0||endpoint.rfind("THRESHOLD_CALIBRATION",0)==0||endpoint.rfind("ADC_DELAY",0)==0
+    ||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0||endpoint=="CURRENT_ADDRESS"||endpoint=="HISTOGRAM_DATA_READOUT"||endpoint=="READOUT_RATE"
+    ||endpoint=="SEL_HITS_DROPPED"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="CRU_BC"||endpoint=="CRU_ORBIT"
+    ||endpoint=="DATA_SELECT_TRG_MASK"||endpoint=="DATA_BUNCH_PATTERN"||endpoint=="TRIGGER_SINGLE_VALUE"||endpoint=="TRIGGER_CONT_PATTERN_MSB"||endpoint=="TRIGGER_CONT_PATTERN_LSB"||endpoint=="TRIGGER_CONT_VALUE"
+    ||endpoint=="GENERATORS_BUNCH_FREQ"||endpoint=="GENERATORS_FREQ_OFFSET"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0||endpoint=="TRIGGER_RESPOND_MASK"
+    ||endpoint=="LAST_RESTART_REASON"){
+        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
+            sequence = "reset\n0x000"+address+"00000000,write\nread";
+        }
+        else if(parameters.size()>1&&parameters[1]=="1"){
+            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
+        }
+        else{
+            sequence="";
+            noRpcRequest=true;
+            this->publishError("Wrong parameters");
+        }
+        return sequence;
+    }
+    else if(endpoint=="TRG_SETTINGS"){
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""){
+            this->publishError("Wrong parameters");
+            noRpcRequest=true;
+        }
+        else if(sequence=="check"){
+            int index = SWT_creator::parameterValue(parameters[0]);
+            if((index>=0&&index<=7)){
+                SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFFF00, address, sequence);
+            }
+            else{
+                this->publishError("Wrong parameters");
+                noRpcRequest=true;
+            }
+        }
+        return sequence;
+    }
+    else if(endpoint.rfind("CHANNEL_SETTINGS",0)==0){
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""){
+            this->publishError("Wrong parameters");
+            noRpcRequest=true;
+        }
+        else if(sequence=="check"){
+            int index = SWT_creator::parameterValue(parameters[0]);
+            if(parameters.size()>2&&(index>=0&&index<=11)){
+                SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFF000, address, sequence);
+            }
+            else{
+                this->publishError("Wrong parameters");
+                noRpcRequest=true;
+            }
         }
         return sequence;
     }
@@ -135,159 +127,53 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="CHANNEL_ADC_BASELINE"||endpoint.rfind("CFD_THRESHOLD",0)==0||endpoint.rfind("THRESHOLD_CALIBRATION",0)==0||endpoint.rfind("ADC_DELAY",0)==0
-    ||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0){
-        Print::PrintInfo(input);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
+    else if(endpoint=="CHANNELS_MASK"||endpoint=="STATUS_BITS"){
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""||sequence=="check"){
             this->publishError("Wrong parameters");
-        }
-        return sequence;
-    }
-    else if(endpoint=="CHANNELS_MASK"){
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else{
-            sequence="";
             noRpcRequest=true;
-            this->publishError("Wrong parameters");
         }
         return sequence;
     }
     else if(endpoint=="HISTOGRAMMING_CONTROL"){
-
-        int index = SWT_creator::parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=0&&index<=11)){
-            SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFF000, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(index, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(index, address, sequence);
-        }
-        else{
-            sequence="";
-            noRpcRequest=true;
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""){
             this->publishError("Wrong parameters");
-        }
-        return sequence;
-    }
-    else if(endpoint=="STATUS_BITS"){
-        
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else{
             noRpcRequest=true;
-            sequence="";
-            this->publishError("Wrong parameters");
         }
-        return sequence;
-    }
-    else if(endpoint=="BOARD_TEMPERATURE"||endpoint=="BOARD_ID"||endpoint=="LAST_RESTART_REASON"){
-        
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Readonly parameter");
+        else if(sequence=="check"){
+            int index = SWT_creator::parameterValue(parameters[0]);
+            if(parameters.size()>2&&(index>=0&&index<=11)){
+                SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFFF000, address, sequence);
+            }
+            else{
+                this->publishError("Wrong parameters");
+                noRpcRequest=true;
+            }
         }
         return sequence;
     }
     else if(endpoint=="MODE_SETTINGS"){
-
-        int index = SWT_creator::parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(index, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=0&&index<=3)){
-            SWT_creator::sequenceOperationBits(index, 0, 0xFFFFFFF0, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=4&&index<=7)){
-            SWT_creator::sequenceOperationBits(index, 4, 0xFFFFFF0F, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=16&&index<=19)){
-            SWT_creator::sequenceOperationBits(index, 16, 0xFFF0FFFF, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(index, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""){
             this->publishError("Wrong parameters");
-        }
-        return sequence;
-    }
-    else if(endpoint=="TRIGGER_RESPOND_MASK"||endpoint=="LAST_RESTART_REASON"){
-        
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-         else{
             noRpcRequest=true;
-            sequence="";
-            this->publishError("Wrong parameters");
         }
-        return sequence;
-    }
-    else if(endpoint=="DATA_BUNCH_PATTERN"||endpoint=="TRIGGER_SINGLE_VALUE"||endpoint=="TRIGGER_CONT_PATTERN_MSB"||endpoint=="TRIGGER_CONT_PATTERN_LSB"||endpoint=="TRIGGER_CONT_VALUE"
-    ||endpoint=="GENERATORS_BUNCH_FREQ"||endpoint=="GENERATORS_FREQ_OFFSET"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0){
-
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(SWT_creator::parameterValue(parameters[0]), address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Wrong parameters");
+        else if(sequence=="check"){
+            int index = SWT_creator::parameterValue(parameters[0]);
+            if(parameters.size()>2&&(index>=0&&index<=3)){
+                SWT_creator::sequenceOperationBits(index, 0, 0xFFFFFFF0, address, sequence);
+            }
+            else if(parameters.size()>2&&(index>=4&&index<=7)){
+                SWT_creator::sequenceOperationBits(index, 4, 0xFFFFFF0F, address, sequence);
+            }
+            else if(parameters.size()>2&&(index>=16&&index<=19)){
+                SWT_creator::sequenceOperationBits(index, 16, 0xFFF0FFFF, address, sequence);
+            }
+            else{
+                this->publishError("Wrong parameters");
+                noRpcRequest=true;
+            }
         }
         return sequence;
     }
@@ -358,41 +244,36 @@ string PM_default::processInputMessage(string input) {
         return sequence;
     }
     else if(endpoint=="MODES_STATUS"){
-
-        int index = SWT_creator::parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(index, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=16&&index<=19)){
-            SWT_creator::sequenceOperationBits(index, 16, 0xFFF0FFFF, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=20&&index<=23)){
-            SWT_creator::sequenceOperationBits(index, 20, 0xFF0FFFFF, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=24&&index<=27)){
-            SWT_creator::sequenceOperationBits(index, 24, 0xF0FFFFFF, address, sequence);
-        }
-        else if(parameters.size()>2&&(index>=28&&index<=31)){
-            SWT_creator::sequenceOperationBits(index, 28, 0x0FFFFFFF, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="3"){
-            SWT_creator::sequenceOperationRMWOR(index, address, sequence);
-        }
-        else if(parameters.size()>1&&parameters[1]=="2"){
-            SWT_creator::sequenceOperationRMWAND(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""){
             this->publishError("Wrong parameters");
+            noRpcRequest=true;
+        }
+        else if(sequence=="check"){
+            int index = SWT_creator::parameterValue(parameters[0]);
+            if(parameters.size()>2&&(index>=16&&index<=19)){
+                SWT_creator::sequenceOperationBits(index, 16, 0xFFF0FFFF, address, sequence);
+            }
+            else if(parameters.size()>2&&(index>=20&&index<=23)){
+                SWT_creator::sequenceOperationBits(index, 20, 0xFF0FFFFF, address, sequence);
+            }
+            else if(parameters.size()>2&&(index>=24&&index<=27)){
+                SWT_creator::sequenceOperationBits(index, 24, 0xF0FFFFFF, address, sequence);
+            }
+            else if(parameters.size()>2&&(index>=28&&index<=31)){
+                SWT_creator::sequenceOperationBits(index, 28, 0x0FFFFFFF, address, sequence);
+            }
+            else{
+                this->publishError("Wrong parameters");
+                noRpcRequest=true;
+            }
         }
         return sequence;
     }
     else if(endpoint=="FIFO_COUNT"){
-
+        noRpcRequest=true;
+        this->publishAnswer("FIFO");
+        return "output";
         int index = SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -413,34 +294,6 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="CURRENT_ADDRESS"||endpoint=="HISTOGRAM_DATA_READOUT"||endpoint=="READOUT_RATE"||endpoint=="SEL_HITS_DROPPED"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"
-    ||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="CRU_BC"||endpoint=="CRU_ORBIT"||endpoint=="DATA_SELECT_TRG_MASK"){
-        
-        int index = SWT_creator::parameterValue(parameters[0]);
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else if(parameters.size()>1&&parameters[1]=="1"){
-            SWT_creator::sequenceOperationWrite(index, address, sequence);
-        }
-        else{
-            noRpcRequest=true;
-            sequence="";
-            this->publishError("Wrong parameters");
-        }
-        return sequence;
-    }
-    else if(endpoint=="FPGA_TEMPERATURE"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TIMESTAMP"){
-        
-        if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-            sequence = "reset\n0x000"+address+"00000000,write\nread";
-        }
-        else{
-            sequence="";
-            this->publishError("Readonly parameter");
-        }
-        return sequence;
-    }
 }
 
 string PM_default::processOutputMessage(string output) {
@@ -449,6 +302,9 @@ string PM_default::processOutputMessage(string output) {
         When ALF return output, program takes only value saved on last 8bits of read word. On some parameters in the following lines there are made some 
         calculations, in other case value is returned with no additional operations.
     */
+
+    Print::PrintInfo(output);
+    return "0";
 
     string value;
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
@@ -507,10 +363,10 @@ string PM_default::processOutputMessage(string output) {
     else if(endpoint.rfind("ADC0_DISPERSION",0)==0||endpoint.rfind("ADC1_DISPERSION",0)==0){
         return std::to_string(std::sqrt(finalValue));
     }
-    else if(endpoint == "BOARD_TEMPERATURE"){
+    else if(endpoint == "TEMPERATURE"){
         return std::to_string(finalValue/10.0);
     }
-    else if(endpoint == "FPGA_TEMPERATURE"){
+    else if(endpoint == "FPGA_TEMP"){
         return std::to_string(finalValue * 503.975 / 65536 - 273.15);
     }
     else if(endpoint == "1VPOWER"){
@@ -523,7 +379,7 @@ string PM_default::processOutputMessage(string output) {
     if (finalValue > 50000&&(endpoint.rfind("CHANNEL_SETTINGS",0)==0||endpoint.rfind("ADC0_BASELINE",0)==0
     ||endpoint.rfind("ADC1_BASELINE",0)==0||endpoint.rfind("ADC0_MEAN",0)==0||endpoint.rfind("ADC1_MEAN",0)==0
     ||endpoint.rfind("ADC1_MEAN",0)==0||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0
-    ||endpoint.rfind("BOARD_TEMPERATURE",0)==0)) {
+    ||endpoint.rfind("TEMPERATURE",0)==0)) {
       int16_t x = stoi(value, nullptr, 16);
       finalValue=-(~x+1);
     }

@@ -6,7 +6,6 @@
 #include "trigger_sign.h"
 #include "trigger_rand.h"
 #include "refresh_data.h"
-#include "triggers.h"
 #include "PM_status.h"
 #include "TCM_default.h"
 #include "refresh_counters.h"
@@ -23,6 +22,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include "histogramReader.h"
+#include "refresh_mapi_PM_group.h"
+
 
 
 MapiFactory::MapiFactory(Fred *fred)
@@ -142,7 +143,7 @@ void MapiFactory::generateObjects(){
     RefreshData* refreshData = new RefreshData();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_DATA", refreshData);
     this->mapiObjects.push_back(refreshData);
-    Triggers* triggers = new Triggers();
+    TCM_default* triggers = new TCM_default("TRIGGERS_OUTPUTS_MODE");
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/TRIGGERS_OUTPUTS_MODE", triggers);
     this->mapiObjects.push_back(triggers);
     TriggerRand* triggerRand5 = new TriggerRand(std::string("TRIGGER5_RAND"));
@@ -640,11 +641,11 @@ void MapiFactory::generateObjects(){
             this->mapiObjects.push_back(tempMapi);
             
         }
-        PM_default*  boardTemp = new PM_default("BOARD_TEMPERATURE", addresses[j], prefixes[j]);
-        this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/BOARD_TEMPERATURE", boardTemp);
+        PM_default*  boardTemp = new PM_default("TEMPERATURE", addresses[j], prefixes[j]);
+        this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/TEMPERATURE", boardTemp);
         this->mapiObjects.push_back(boardTemp);
-        PM_default*  boardId = new PM_default("BOARD_ID", addresses[j], prefixes[j]);
-        this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/BOARD_ID", boardId);
+        PM_default*  boardId = new PM_default("BOARD_TYPE", addresses[j], prefixes[j]);
+        this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/BOARD_TYPE", boardId);
         this->mapiObjects.push_back(boardId);
         PM_default*  lastRestartReason = new PM_default("LAST_RESTART_REASON", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/LAST_RESTART_REASON", lastRestartReason);
@@ -757,8 +758,8 @@ void MapiFactory::generateObjects(){
         lastRestartReason = new PM_default("FW_UPGRADE_STATUS", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FW_UPGRADE_STATUS", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
-        lastRestartReason = new PM_default("FPGA_TEMPERATURE", addresses[j], prefixes[j]);
-        this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FPGA_TEMPERATURE", lastRestartReason);
+        lastRestartReason = new PM_default("FPGA_TEMP", addresses[j], prefixes[j]);
+        this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/FPGA_TEMP", lastRestartReason);
         this->mapiObjects.push_back(lastRestartReason);
         lastRestartReason = new PM_default("1VPOWER", addresses[j], prefixes[j]);
         this->fred->registerMapiObject(fred->Name() + "/PM/"+prefixes[j]+"/1VPOWER", lastRestartReason);
@@ -788,6 +789,9 @@ void MapiFactory::generateObjects(){
     HistogramReader* histogramReader = new HistogramReader();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/HISTOGRAM_READER", histogramReader);
     this->mapiObjects.push_back(histogramReader);
+    RefreshMapiPMGroup* mapiPMgroup = new RefreshMapiPMGroup(this->fred);
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_PM_MAPI_GROUP", mapiPMgroup);
+    this->mapiObjects.push_back(mapiPMgroup);
 }
 
 

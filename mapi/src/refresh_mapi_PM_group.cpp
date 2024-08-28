@@ -1,15 +1,11 @@
-#include <algorithm>
 #include <iostream>
-#include <numeric>
-#include <bitset>
-#include <sstream>
 #include <string>
-#include "refresh_PMs.h"
-#include "Alfred/print.h"
+#include <algorithm>
+#include <unistd.h>
+#include "refresh_mapi_PM_group.h"
 #include "Parser/utility.h"
+#include "Alfred/print.h"
 #include "TCM_values.h"
-#include <thread>
-#include <chrono>
 #include <cmath>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -18,12 +14,9 @@
 #include "SWT_creator.h"
 
 
-RefreshPMs::RefreshPMs() {
-
-    /*
-        Refresh PMs initialize vector of services names and create sequence string to be sent to ALF to get values for each service 
-    */
-
+RefreshMapiPMGroup::RefreshMapiPMGroup(Fred* fred){
+    this->fred = fred;
+    firstTime=true;
     std::string fileName = "detector_type.cfg";
     boost::property_tree::ptree tree;
 
@@ -74,7 +67,7 @@ RefreshPMs::RefreshPMs() {
 
     firstTime=true;
     int arraySize = prefixesPM.size();
-    std::string serviceName="PM/";
+    std::string serviceName="LAB/PM/";
     sequence="reset";
 
     fileName = "refresh_PMs.cfg";
@@ -88,7 +81,7 @@ RefreshPMs::RefreshPMs() {
         
         for (const auto& section : tree) {
             if(section.first=="PMA0"||section.first=="PMC0"){
-                serviceName="PM/"+section.first+"/";
+                serviceName="LAB/PM/"+section.first+"/";
                 std::string addressParameter;
                 if(section.first=="PMA0"){
                     addressParameter = addresses[0];
@@ -110,7 +103,7 @@ RefreshPMs::RefreshPMs() {
     }
 }
 
-string RefreshPMs::processInputMessage(string input) {
+string RefreshMapiPMGroup::processInputMessage(string input){
     if(input=="go"){
         return sequence;
     }
@@ -119,20 +112,16 @@ string RefreshPMs::processInputMessage(string input) {
     return "";
 }
 
-string RefreshPMs::processOutputMessage(string output) {
-
-    /*
-        Compare values with data from previous iteration saved in vector, if parameter value has changed service is update with updateTopicAnswer function,
-        if not that parameter is skipped in that iteration
-    */
-
+string RefreshMapiPMGroup::processOutputMessage(string output){
+    vector< pair <string, string> > requests;
+    std::string value;
     if(output!="failure"){
         try{
             string value;
             output.erase(remove(output.begin(), output.end(), '\n'), output.end());
             output = output.substr(8);
             int maxCount=20000, count=0;
-            bool firstIteration=true;
+            bool firstIteration = true;
             bool updateService = false;
             while(output.length()>0&&count<maxCount&&count<services.size()){
                 if(!firstIteration){
@@ -152,6 +141,7 @@ string RefreshPMs::processOutputMessage(string output) {
                 }
 
                 updateService=false;
+                firstTime=true;
                 
                 if(firstTime){
                     oldValues.push_back(hexValue);
@@ -163,78 +153,15 @@ string RefreshPMs::processOutputMessage(string output) {
                 }
 
                 if(updateService){
-                    if(services[count].find("TDC_12_PHASE_TUNING") != std::string::npos){
-
-                        //return "number_1,number_2"
-
-                        std::string returnStr = "";
-                        unsigned int x;
-                        std::stringstream ss;
-                        ss << std::hex << value.substr(6,2);
-                        ss >> x;
-
-                        if (x > 127) {
-                            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x)))*13.*8/7);
-                        }
-                        else {
-                            returnStr += std::to_string((static_cast<int>(x))*13.*8/7);
-                        }
-                        returnStr+=",";
-                        ss.str(std::string());
-                        ss.clear();
-                        ss << std::hex << value.substr(4,2);
-                        ss >> x;
-
-                        if (x > 127) {
-                            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x)))*13.*8/7);
-                        }
-                        else {
-                            returnStr += std::to_string((static_cast<int>(x))*13.*8/7);
-                        }
-                        updateTopicAnswer(services[count], returnStr);
-                    }
-                    else if(services[count].find("TDC_3_PHASE_TUNING") != std::string::npos){
-                        updateTopicAnswer(services[count], std::to_string(stoi(value.substr(6,2), nullptr, 16)*13.*8/7));
-                    }
-                    else if(services[count].find("RAW_TDC_DATA") != std::string::npos){
-                        std::stringstream ss;
-                        ss << std::hex << hexValue;
-                        updateTopicAnswer(services[count], "0x"+ss.str());
-                    }
-                    else if(services[count].find("ADC0_DISPERSION") != std::string::npos||services[count].find("ADC1_DISPERSION") != std::string::npos){
-                        updateTopicAnswer(services[count], std::to_string(std::sqrt(hexValue)));
-                    }
-                    else if(services[count].find("CFD_THRESHOLD") != std::string::npos || services[count].find("CFD_ZERO") != std::string::npos || services[count].find("ADC_ZERO") != std::string::npos || services[count].find("ADC_DELAY") != std::string::npos){
-                        std::string returnStr = "";
-                        unsigned int x = hexValue;
-                        if (hexValue > 1000) {
-                            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x))));
-                        }
-                        else {
-                            returnStr += std::to_string((static_cast<int>(x)));
-                        }
-                        updateTopicAnswer(services[count], returnStr);
-                    }
-                    else if(services[count].find("FPGA_TEMP") != std::string::npos){
-                        updateTopicAnswer(services[count], std::to_string(hexValue * 503.975 / 65536 - 273.15));
-                    }
-                    else if(services[count].find("1VPOWER") != std::string::npos){
-                        updateTopicAnswer(services[count], std::to_string(hexValue * 3 / 65536.0));
-                    }
-                    else if(services[count].find("18VPOWER") != std::string::npos){
-                        updateTopicAnswer(services[count], std::to_string(hexValue * 3 / 65536.0));
-                    }
-                    else if(services[count].find("TEMPERATURE") != std::string::npos){
-                        updateTopicAnswer(services[count], std::to_string(hexValue / 10.0));
-                    }
-                    else{
-                        updateTopicAnswer(services[count], std::to_string(hexValue));
+                    if(count<192){
+                        requests.push_back(make_pair(services[count], "0,0"));
                     }
                 }
 
                 count++;
             }
             firstTime=false;
+            newMapiGroupRequest(requests);
             return "OK";
         }
         catch(exception& e){
@@ -248,5 +175,4 @@ string RefreshPMs::processOutputMessage(string output) {
         this->publishError("Failure");
         return "failure";
     }
-    
 }
