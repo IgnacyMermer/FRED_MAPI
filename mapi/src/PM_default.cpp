@@ -44,7 +44,7 @@ string PM_default::processInputMessage(string input) {
     if(endpoint.rfind("TDC_12_PHASE_TUNING",0)==0||endpoint.rfind("TDC_3_PHASE_TUNING",0)==0||endpoint.rfind("RAW_TDC_DATA",0)==0
     ||endpoint.rfind("ADC0_DISPERSION",0)==0||endpoint.rfind("ADC1_DISPERSION",0)==0||endpoint.rfind("ADC0_MEAN",0)==0||endpoint.rfind("ADC1_MEAN",0)==0
     ||endpoint.rfind("COUNT_CFD_HITS",0)==0||endpoint.rfind("COUNT_TRG_HITS",0)==0||endpoint.rfind("ADC0_BASELINE",0)==0||endpoint.rfind("ADC1_BASELINE",0)==0||endpoint=="TEMPERATURE"
-    ||endpoint=="BOARD_TYPE"||endpoint=="LAST_RESTART_REASON"||endpoint=="FPGA_TEMP"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FPGA_TIMESTAMP"||endpoint=="ATX_TIMESTAMP"){
+    ||endpoint=="BOARD_TYPE"||endpoint=="LAST_RESTART_REASON"||endpoint=="FPGA_TEMP"||endpoint=="1VPOWER"||endpoint=="18VPOWER"||endpoint=="FW_TIME"||endpoint=="MCODE_TIME"){
 
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";

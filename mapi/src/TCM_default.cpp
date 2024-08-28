@@ -26,6 +26,7 @@ string TCM_default::processInputMessage(string input) {
         noRpcRequest=true;
         return "0";
     }
+    Print::PrintInfo(input);
     if(endpoint=="VTIME_LOW"||endpoint=="VTIME_HIGH"){
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -99,7 +100,8 @@ string TCM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="ATTENUATOR"){
+    else if(endpoint=="ATTENUATOR"||endpoint=="TRG_ORA_RATE"||endpoint=="TRG_ORC_RATE"||endpoint=="TRG_SC_RATE"||endpoint=="TRG_C_RATE"||endpoint=="TRG_V_RATE"
+    ||endpoint=="TRG_ORA_SIGN"||endpoint=="TRG_ORC_SIGN"||endpoint=="TRG_SC_SIGN"||endpoint=="TRG_C_SIGN"||endpoint=="TRG_V_SIGN"){
         int index = std::stoi(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -411,6 +413,31 @@ string TCM_default::processInputMessage(string input) {
         }
         return sequence;
     }
+    else if(endpoint=="TRG_1_RATE"){
+        noRpcRequest=true;
+        this->publishAnswer(std::to_string(tcm.temp.trigger1rate));
+        sequence="";
+    }
+    else if(endpoint=="TRG_2_RATE"){
+        noRpcRequest=true;
+        this->publishAnswer(std::to_string(tcm.temp.trigger2rate));
+        sequence="";
+    }
+    else if(endpoint=="TRG_3_RATE"){
+        noRpcRequest=true;
+        this->publishAnswer(std::to_string(tcm.temp.trigger3rate));
+        sequence="";
+    }
+    else if(endpoint=="TRG_4_RATE"){
+        noRpcRequest=true;
+        this->publishAnswer(std::to_string(tcm.temp.trigger4rate));
+        sequence="";
+    }
+    else if(endpoint=="TRG_5_RATE"){
+        noRpcRequest=true;
+        this->publishAnswer(std::to_string(tcm.temp.trigger5rate));
+        sequence="";
+    }
     return sequence;
 }
 
@@ -430,19 +457,19 @@ string TCM_default::processOutputMessage(string output) {
     else if(endpoint=="18VPOWER"){
         return std::to_string(finalValue * 3 / 65536.0);
     }
-    else if(endpoint=="TRG_C_RATE"){
+    else if(endpoint=="TRG_1_RATE"){
         return std::to_string(tcm.temp.trigger1rate);
     }
-    else if(endpoint=="TRG_SC_RATE"){
+    else if(endpoint=="TRG_2_RATE"){
         return std::to_string(tcm.temp.trigger2rate);
     }
-    else if(endpoint=="TRG_V_RATE"){
+    else if(endpoint=="TRG_3_RATE"){
         return std::to_string(tcm.temp.trigger3rate);
     }
-    else if(endpoint=="TRG_ORC_RATE"){
+    else if(endpoint=="TRG_4_RATE"){
         return std::to_string(tcm.temp.trigger4rate);
     }
-    else if(endpoint=="TRG_ORA_RATE"){
+    else if(endpoint=="TRG_5_RATE"){
         return std::to_string(tcm.temp.trigger5rate);
     }
     else if(endpoint=="TEMPERATURE"){
@@ -485,6 +512,9 @@ string TCM_default::processOutputMessage(string output) {
         1024 ; 
         //: 1280);
         return std::to_string(finalValue*phaseStep_ns);
+    }
+    else if(endpoint=="TRG_ORA_SIGN"||endpoint=="TRG_ORC_SIGN"||endpoint=="TRG_SC_SIGN"||endpoint=="TRG_C_SIGN"||endpoint=="TRG_V_SIGN"){
+        return std::to_string(finalValue/128);
     }
     noReturn=false;
   }

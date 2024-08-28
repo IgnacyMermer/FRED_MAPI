@@ -145,10 +145,7 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
                 }
 
                 if(updateService){
-                    if(count<250){
-                    //requests.push_back(make_pair(services[count], "FRED,"+std::to_string(hexValue)));
-                        requests.push_back(make_pair(services[count], "0,0"));
-                    }
+                    requests.push_back(make_pair(services[count], "0,0"));
                 }
 
                 count++;

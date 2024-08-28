@@ -19,7 +19,12 @@ ResetErrors::ResetErrors() {
 }
 
 string ResetErrors::processInputMessage(string input) {
-    if(input=="go"){
+    Print::PrintInfo(input);
+    if(input=="GBT"){
+        sequence="reset\n0x002000000D8FFFF00FF,write\n0x003000000D800000000,write\n0x002000000D8FFFFFFFF,write\n0x003000000D800001000,write\n0x002000000D8FFFF00FF,write\n0x003000000D800000000,write\n";
+        return sequence;
+    }
+    else if(input=="clear_errors"){
         sequence = "reset\n0x002000000D8FFFF00FF,write\nread\n0x003000000D800000000,write\nread\n0x002000000D8FFFFFFFF,write\nread\n0x003000000D80000C800,write\nread\n0x002000000D8FFBF00FF,write\nread\n0x003000000D800000000,write\nread";
         const std::string prefixesPM[2] = {"PMA0", "PMC0"};
         const std::string addresses[2] = {"02", "16"};
