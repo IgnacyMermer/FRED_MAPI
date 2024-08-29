@@ -91,10 +91,63 @@ string RefreshMapiGroup::processOutputMessage(string output){
                 }
 
                 if(updateService){
-                    //if(count<1){
-                        //requests.push_back(make_pair(services[count], "FRED,"+std::to_string(hexValue)));
-                        requests.push_back(make_pair(services[count], "0,0"));
-                    //}
+                    std::string returnValue = std::to_string(hexValue);
+                    if(services[count].find("FPGA_TEMP")!=string::npos){
+                        returnValue = std::to_string(hexValue * 503.975 / 65536 - 273.15);
+                    }
+                    else if(services[count].find("1VPOWER")!=string::npos){
+                        returnValue = std::to_string(hexValue * 3 / 65536.0);
+                    }
+                    else if(services[count].find("18VPOWER")!=string::npos){
+                        returnValue = std::to_string(hexValue * 3 / 65536.0);
+                    }
+                    else if(services[count].find("TEMPERATURE")!=string::npos){
+                        returnValue = std::to_string(hexValue/10.);
+                    }
+                    else if(services[count].find("LASER_DELAY")!=string::npos){
+                        float tempValue = stoi(value, nullptr, 16);
+                        if (tempValue > 10000) {
+                            int16_t x = stoi(value, nullptr, 16);
+                            tempValue=-(~x+1);
+                        }
+                        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+                        float halfBC_ns = 500. / systemClock_MHz;
+                        float phaseStep_ns = halfBC_ns / 
+                        //(SERIAL_NUM ? 
+                        1024 ; 
+                        //: 1280);
+                        tempValue = tempValue*phaseStep_ns;
+                        returnValue = std::to_string(tempValue);
+                    }
+                    else if(services[count].find("LASER_DIVIDER")!=string::npos||services[count].find("LASER_FREQUENCY")!=string::npos){
+                        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+                        long long tempValue = std::stoll(value.substr(2,6), nullptr, 16);
+                        float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
+
+
+                        updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
+                    
+                    
+                    }
+                    else if(services[count].find("DELAY_A")!=string::npos||services[count].find("DELAY_C")!=string::npos){
+                        if (hexValue > 10000) {
+                            int16_t x = stoi(value, nullptr, 16);
+                            hexValue=-(~x+1);
+                        }
+                        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
+                        float halfBC_ns = 500. / systemClock_MHz;
+                        float phaseStep_ns = halfBC_ns / 
+                        //(SERIAL_NUM ? 
+                        1024 ; 
+                        //: 1280);
+                        returnValue = std::to_string(hexValue*phaseStep_ns);
+                    }
+                    else if(services[count].find("TRG_ORA_SIGN")!=string::npos||services[count].find("TRG_ORC_SIGN")!=string::npos||services[count].find("TRG_SC_SIGN")!=string::npos
+                    ||services[count].find("TRG_C_SIGN")!=string::npos||services[count].find("TRG_V_SIGN")!=string::npos){
+                        returnValue = std::to_string(hexValue/128);
+                    }
+                    requests.push_back(make_pair(services[count], "FRED,"+returnValue));
+                    //requests.push_back(make_pair(services[count], "0,0"));
                     
                 }
                 count++;

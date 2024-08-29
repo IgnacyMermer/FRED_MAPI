@@ -26,7 +26,6 @@ string TCM_default::processInputMessage(string input) {
         noRpcRequest=true;
         return "0";
     }
-    Print::PrintInfo(input);
     if(endpoint=="VTIME_LOW"||endpoint=="VTIME_HIGH"){
         if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";

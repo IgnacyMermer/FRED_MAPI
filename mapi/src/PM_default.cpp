@@ -182,7 +182,7 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="RDH_FIELDS1"){
+    else if(endpoint=="RDH_FIELDS"){
 
         int index = SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
@@ -204,7 +204,7 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="RDH_FIELDS2"){
+    else if(endpoint=="CRU_SIZE"){
 
         int index = SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
@@ -353,6 +353,7 @@ string PM_default::processOutputMessage(string output) {
         else {
             returnStr += std::to_string((static_cast<int>(x))*13*8/7);
         }
+        return returnStr;
     }
     else if(endpoint.rfind("RAW_TDC_DATA",0)==0){
         std::stringstream ss;

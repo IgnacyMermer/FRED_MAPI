@@ -14,6 +14,11 @@ BoardStatus::BoardStatus() {
 }
 
 string BoardStatus::processInputMessage(string input) {
+  if(input.length()>5&&input.substr(0,5)=="FRED,"){
+    this->publishAnswer(input.substr(5));
+    noRpcRequest=true;
+    return "0";
+  }
   vector<string> parameters = Utility::splitString(input, ",");
   std::string address = "0000"+tcm.addresses["READOUTCARDS/TCM0/BOARD_STATUS"];
   if(parameters.size()>1&&parameters[1]=="1"){

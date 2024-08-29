@@ -145,7 +145,83 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
                 }
 
                 if(updateService){
-                    requests.push_back(make_pair(services[count], "0,0"));
+                    std::string returnValue = std::to_string(hexValue);
+                    if(services[count].find("TDC_12_PHASE_TUNING")!=string::npos){
+
+                        //program split two words from one parameter for two values to transfer into signed values.
+                        //return "number_1,number_2"
+
+                        std::string returnStr = "";
+                        unsigned int x;
+                        std::stringstream ss;
+                        ss << std::hex << value.substr(6,2);
+                        ss >> x;
+
+                        if (x > 127) {
+                            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x)))*13*8/7);
+                        }
+                        else {
+                            returnStr += std::to_string((static_cast<int>(x))*13*8/7);
+                        }
+                        returnStr+=",";
+                        ss.str(std::string());
+                        ss.clear();
+                        ss << std::hex << value.substr(4,2);
+                        ss >> x;
+
+                        if (x > 127) {
+                            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x)))*13*8/7);
+                        }
+                        else {
+                            returnStr += std::to_string((static_cast<int>(x))*13*8/7);
+                        }
+                        returnValue = returnStr;
+                    }
+                    else if(services[count].find("TDC_3_PHASE_TUNING")!=string::npos){
+                        std::string returnStr = "";
+                        unsigned int x;
+                        std::stringstream ss;
+                        ss << std::hex << value.substr(6,2);
+                        ss >> x;
+
+                        if (x > 127) {
+                            returnStr += std::to_string((static_cast<int>(static_cast<signed char>(x)))*13*8/7);
+                        }
+                        else {
+                            returnStr += std::to_string((static_cast<int>(x))*13*8/7);
+                        }
+                        returnValue = returnStr;
+                    }
+                    else if(services[count].find("RAW_TDC_DATA")!=string::npos){
+                        std::stringstream ss;
+                        ss << std::hex << hexValue;
+                        returnValue = "0x"+ss.str();
+                    }
+                    else if(services[count].find("ADC0_DISPERSION")!=string::npos||services[count].find("ADC1_DISPERSION")!=string::npos){
+                        returnValue = std::to_string(std::sqrt(hexValue));
+                    }
+                    else if(services[count].find("TEMPERATURE")!=string::npos){
+                        returnValue = std::to_string(hexValue/10.0);
+                    }
+                    else if(services[count].find("FPGA_TEMP")!=string::npos){
+                        returnValue = std::to_string(hexValue * 503.975 / 65536 - 273.15);
+                    }
+                    else if(services[count].find("1VPOWER")!=string::npos){
+                        returnValue = std::to_string(hexValue * 3 / 65536.0);
+                    }
+                    else if(services[count].find("18VPOWER")!=string::npos){
+                        returnValue = std::to_string(hexValue * 3 / 65536.0);
+                    }
+
+                    if (hexValue > 50000&&(services[count].find("CHANNEL_SETTINGS")!=string::npos||services[count].find("ADC0_BASELINE")!=string::npos
+                    ||services[count].find("ADC1_BASELINE")!=string::npos||services[count].find("ADC0_MEAN")!=string::npos||services[count].find("ADC1_MEAN")!=string::npos
+                    ||services[count].find("ADC1_MEAN")!=string::npos||services[count].find("CFD_ZERO")!=string::npos||services[count].find("ADC_ZERO")!=string::npos
+                    ||services[count].find("TEMPERATURE")!=string::npos)) {
+                        int16_t x = stoi(value, nullptr, 16);
+                        hexValue=-(~x+1);
+                        returnValue = std::to_string(hexValue);
+                    }
+                    requests.push_back(make_pair(services[count], "FRED,"+returnValue));
                 }
 
                 count++;
