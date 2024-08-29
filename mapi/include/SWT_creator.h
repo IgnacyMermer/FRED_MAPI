@@ -1,4 +1,5 @@
 #include <vector>
+#include <cmath>
 
 class SWT_creator{
 public:

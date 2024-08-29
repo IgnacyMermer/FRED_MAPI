@@ -9,7 +9,7 @@
 #include <sstream>
 #include <cmath>
 #include "SWT_creator.h"
-
+#include <bitset>
 
 TCM_default::TCM_default(std::string endpointParam) {
     finalValue = 0;
@@ -31,7 +31,7 @@ string TCM_default::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            long long num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
+            long long num = SWT_creator::parameterValue(parameters[0]);
             if(num<-512||num>511){
                 noRpcRequest=true;
                 this->publishError("Value out of correct range");
@@ -56,7 +56,7 @@ string TCM_default::processInputMessage(string input) {
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else if(parameters.size()>1&&parameters[1]=="1"){
-            long long num = SWT_creator::SWT_creator::parameterValue(parameters[0]);
+            long long num = SWT_creator::parameterValue(parameters[0]);
             if(num<0||num>65535){
                 noRpcRequest=true;
                 this->publishError("Value out of correct range");
@@ -102,6 +102,7 @@ string TCM_default::processInputMessage(string input) {
     else if(endpoint=="ATTENUATOR"||endpoint=="TRG_ORA_RATE"||endpoint=="TRG_ORC_RATE"||endpoint=="TRG_SC_RATE"||endpoint=="TRG_C_RATE"||endpoint=="TRG_V_RATE"
     ||endpoint=="TRG_ORA_SIGN"||endpoint=="TRG_ORC_SIGN"||endpoint=="TRG_SC_SIGN"||endpoint=="TRG_C_SIGN"||endpoint=="TRG_V_SIGN"){
         int index = std::stoi(parameters[0]);
+        Print::PrintInfo(input);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -258,6 +259,7 @@ string TCM_default::processInputMessage(string input) {
                 noRpcRequest=true;
             }
         }
+        Print::PrintInfo(sequence);
         return sequence;
     }
     else if(endpoint=="COUNTERS_UPD_RATE"){
@@ -515,6 +517,11 @@ string TCM_default::processOutputMessage(string output) {
     else if(endpoint=="TRG_ORA_SIGN"||endpoint=="TRG_ORC_SIGN"||endpoint=="TRG_SC_SIGN"||endpoint=="TRG_C_SIGN"||endpoint=="TRG_V_SIGN"){
         return std::to_string(finalValue/128);
     }
+    /*else if(endpoint=="TRIGGERS_OUTPUTS_MODE"){
+        std::bitset<32> binary(finalValue);
+        std::string binary_str = binary.to_string();
+        return binary_str;
+    }*/
     noReturn=false;
   }
   catch (exception &e) {

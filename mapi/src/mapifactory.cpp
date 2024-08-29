@@ -21,6 +21,8 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include "histogramReader.h"
 #include "refresh_mapi_PM_group.h"
+#include "ORGate.h"
+#include "refresh_mapi_PM_cnt_group.h"
 
 
 
@@ -190,6 +192,15 @@ void MapiFactory::generateObjects(){
     RefreshMapiPMGroup* mapiPMgroup = new RefreshMapiPMGroup(this->fred);
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_PM_MAPI_GROUP", mapiPMgroup);
     this->mapiObjects.push_back(mapiPMgroup);
+    ORGate* orGateA0 = new ORGate("A0");
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/OR_GATE_A", orGateA0);
+    this->mapiObjects.push_back(orGateA0);
+    ORGate* orGateC0 = new ORGate("C0");
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/OR_GATE_C", orGateC0);
+    this->mapiObjects.push_back(orGateC0);
+    RefreshMapiPMCNTGroup* mapiPMCNTGroup = new RefreshMapiPMCNTGroup(this->fred);
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_MAPI_PM_CNT_GROUP", mapiPMCNTGroup);
+    this->mapiObjects.push_back(mapiPMCNTGroup);
 }
 
 
