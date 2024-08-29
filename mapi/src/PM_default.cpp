@@ -11,9 +11,8 @@
 #include "SWT_creator.h"
 
 
-PM_default::PM_default(std::string endpointParam, std::string pmNumberParam, std::string pmNameParam) {
+PM_default::PM_default(std::string endpointParam, std::string pmNameParam) {
     finalValue = 0;
-    pmNumber = pmNumberParam;
     pmName = pmNameParam;
     endpoint=endpointParam;
 }
@@ -59,8 +58,8 @@ string PM_default::processInputMessage(string input) {
     else if(endpoint=="CHANNEL_ADC_BASELINE"||endpoint.rfind("CFD_THRESHOLD",0)==0||endpoint.rfind("THRESHOLD_CALIBRATION",0)==0||endpoint.rfind("ADC_DELAY",0)==0
     ||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0||endpoint=="CURRENT_ADDRESS"||endpoint=="HISTOGRAM_DATA_READOUT"||endpoint=="READOUT_RATE"
     ||endpoint=="SEL_HITS_DROPPED"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="CRU_BC"||endpoint=="CRU_ORBIT"
-    ||endpoint=="DATA_SELECT_TRG_MASK"||endpoint=="DATA_BUNCH_PATTERN"||endpoint=="TRIGGER_SINGLE_VALUE"||endpoint=="TRIGGER_CONT_PATTERN_MSB"||endpoint=="TRIGGER_CONT_PATTERN_LSB"||endpoint=="TRIGGER_CONT_VALUE"
-    ||endpoint=="GENERATORS_BUNCH_FREQ"||endpoint=="GENERATORS_FREQ_OFFSET"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0||endpoint=="TRIGGER_RESPOND_MASK"
+    ||endpoint=="DATA_SEL_TRG_MASK"||endpoint=="DATA_BUNCH_PATTERN"||endpoint=="TRIGGER_SINGLE_VALUE"||endpoint=="TRIGGER_CONT_PATTERN_MSB"||endpoint=="TRIGGER_CONT_PATTERN_LSB"||endpoint=="TRIGGER_CONT_VALUE"
+    ||endpoint=="GENERATORS_BUNCH_FREQ"||endpoint=="GENERATOR_FREQ_OFFSET"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0||endpoint=="TRIGGER_RESPOND_MASK"
     ||endpoint=="LAST_RESTART_REASON"||endpoint=="FW_UPGRADE_COMM"||endpoint=="FW_UPGRADE_DATA"||endpoint=="FW_UPGRADE_END"||endpoint=="FW_UPGRADE_STATUS"){
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -226,7 +225,7 @@ string PM_default::processInputMessage(string input) {
         }
         return sequence;
     }
-    else if(endpoint=="DELAYS"){
+    else if(endpoint=="BCID_OFFSET"){
 
         int index = SWT_creator::parameterValue(parameters[0]);
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){

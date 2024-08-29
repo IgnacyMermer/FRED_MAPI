@@ -160,7 +160,7 @@ void MapiFactory::generateObjects(){
             for (const auto& section : tree) {
                 if(section.first.substr(0,2)=="PM"){
                     for (const auto& key_value : section.second) {
-                        PM_default* pmDefault = new PM_default(key_value.second.get_value<std::string>(), addresses[j], prefixes[j]);
+                        PM_default* pmDefault = new PM_default(key_value.second.get_value<std::string>(), prefixes[j]);
                         this->fred->registerMapiObject(serviceName+key_value.second.get_value<std::string>(), pmDefault);
                         this->mapiObjects.push_back(pmDefault);
                     }

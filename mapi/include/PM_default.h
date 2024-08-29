@@ -3,11 +3,11 @@
 
 class PM_default: public Mapi{
 public:
-    PM_default(std::string endpointParam, std::string pmNumberParam, std::string pmNameParam);
+    PM_default(std::string endpointParam, std::string pmNameParam);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
     long long finalValue;
-    string sequence, endpoint, pmNumber, pmName;
+    string sequence, endpoint, pmName;
 };
