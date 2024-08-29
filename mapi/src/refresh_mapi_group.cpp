@@ -84,6 +84,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
                 if(firstTime){
                     oldValues.push_back(hexValue);
                     updateService=true;
+                    requests.push_back(make_pair("LAB/READOUTCARDS/TCM0/WORK_STATUS", "set"));
                 }
                 else if(oldValues[count]!=hexValue){
                     oldValues[count]=hexValue;

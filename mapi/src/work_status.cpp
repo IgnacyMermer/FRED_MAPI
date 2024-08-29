@@ -11,9 +11,10 @@ WorkStatus::WorkStatus() {
 }
 
 string WorkStatus::processInputMessage(string input) {
-
-  sequence = "0x0000000000000000000,write\nread";
-  return sequence;
+  this->publishAnswer("1");
+  noRpcRequest=true;
+  //sequence = "0x0000000000000000000,write\nread";
+  return "";
 }
 
 string WorkStatus::processOutputMessage(string output) {

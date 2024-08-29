@@ -58,9 +58,10 @@ string PM_default::processInputMessage(string input) {
     else if(endpoint=="CHANNEL_ADC_BASELINE"||endpoint.rfind("CFD_THRESHOLD",0)==0||endpoint.rfind("THRESHOLD_CALIBRATION",0)==0||endpoint.rfind("ADC_DELAY",0)==0
     ||endpoint.rfind("CFD_ZERO",0)==0||endpoint.rfind("ADC_ZERO",0)==0||endpoint=="CURRENT_ADDRESS"||endpoint=="HISTOGRAM_DATA_READOUT"||endpoint=="READOUT_RATE"
     ||endpoint=="SEL_HITS_DROPPED"||endpoint=="SEL_LAST_HIT_DROPPED_ORBIT"||endpoint=="SEL_FIRST_HIT_DROPPED_ORBIT"||endpoint=="CRU_BC"||endpoint=="CRU_ORBIT"
-    ||endpoint=="DATA_SEL_TRG_MASK"||endpoint=="DATA_BUNCH_PATTERN"||endpoint=="TRIGGER_SINGLE_VALUE"||endpoint=="TRIGGER_CONT_PATTERN_MSB"||endpoint=="TRIGGER_CONT_PATTERN_LSB"||endpoint=="TRIGGER_CONT_VALUE"
-    ||endpoint=="GENERATORS_BUNCH_FREQ"||endpoint=="GENERATOR_FREQ_OFFSET"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0||endpoint=="TRIGGER_RESPOND_MASK"
-    ||endpoint=="LAST_RESTART_REASON"||endpoint=="FW_UPGRADE_COMM"||endpoint=="FW_UPGRADE_DATA"||endpoint=="FW_UPGRADE_END"||endpoint=="FW_UPGRADE_STATUS"){
+    ||endpoint=="DATA_SEL_TRG_MASK"||endpoint=="DG_BUNCH_PATTERN"||endpoint=="TG_SINGLE_VALUE"||endpoint=="TG_PATTERN_1"||endpoint=="TG_PATTERN_0"||endpoint=="TG_CONT_VALUE"
+    ||endpoint=="EMULATION_RATE"||endpoint.rfind("ADC0_RANGE_CORR",0)==0||endpoint.rfind("ADC1_RANGE_CORR",0)==0||endpoint=="DG_TRG_RESPOND_MASK"
+    ||endpoint=="LAST_RESTART_REASON"||endpoint=="FW_UPGRADE_COMM"||endpoint=="FW_UPGRADE_DATA"||endpoint=="FW_UPGRADE_END"||endpoint=="FW_UPGRADE_STATUS"||endpoint=="IPbus_FIFO_DATA"
+    ||endpoint=="EVENTS_COUNT"){
         if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
@@ -71,6 +72,28 @@ string PM_default::processInputMessage(string input) {
             sequence="";
             noRpcRequest=true;
             this->publishError("Wrong parameters");
+        }
+        Print::PrintInfo(sequence);
+        return sequence;
+    }
+    else if(endpoint=="GENERATOR_FREQ_OFFSET"){
+        SWT_creator::readWriteRWMSequences(input, parameters, address, sequence);
+        if(sequence==""){
+            this->publishError("Wrong parameters");
+            noRpcRequest=true;
+        }
+        else if(sequence=="check"){
+            int index = SWT_creator::parameterValue(parameters[0]);
+            if((index>=0&&index<=15)){
+                SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 0, 0xFFFF0000, address, sequence);
+            }
+            else if((index>=16&&index<=31)){
+                SWT_creator::sequenceOperationBits(SWT_creator::parameterValue(parameters[2]), 16, 0x0000FFFF, address, sequence);
+            }
+            else{
+                this->publishError("Wrong parameters");
+                noRpcRequest=true;
+            }
         }
         return sequence;
     }
