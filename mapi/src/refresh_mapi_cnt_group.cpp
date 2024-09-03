@@ -2,7 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <unistd.h>
-#include "refresh_mapi_PM_cnt_group.h"
+#include "refresh_mapi_cnt_group.h"
 #include "Parser/utility.h"
 #include "Alfred/print.h"
 #include "TCM_values.h"
@@ -14,94 +14,29 @@
 #include "SWT_creator.h"
 
 
-RefreshMapiPMCNTGroup::RefreshMapiPMCNTGroup(Fred* fred){
+RefreshMapiCNTGroup::RefreshMapiCNTGroup(Fred* fred){
     this->fred = fred;
     firstTime=true;
-    std::string fileName = "detector_type.cfg";
+    std::string serviceName="READOUTCARDS/TCM0/";
+
+    std::string fileName = "refresh_TCM_counters.cfg";
     boost::property_tree::ptree tree;
 
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    std::vector<std::string> prefixesPM = {"PMA0", "PMC0"}, addresses = {"02", "16"};
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-
-        /*const std::vector<std::string> prefixesMaxTest = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
-        const std::vector<std::string> addressesMaxTest = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
-        const std::vector<std::string> prefixesFT0 = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8"};
-        const std::vector<std::string> addressesFT0 = {"02", "16", "04", "18", "06", "1A", "08", "1C", "0A", "1E", "0C", "20", "0E", "22", "10", "24", "12", "26"};
-          */
-
-        for (const auto& section : tree) {
-            if(section.first=="CONFIG"){
-                for (const auto& key_value : section.second) {
-                    if(key_value.first=="TYPE"){
-                        
-                    }
-                    else if(key_value.first=="PM_NAMES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        prefixesPM.clear();
-                        for(auto name : names){
-                            prefixesPM.push_back(name);
-                        }
-                    }
-                    else if(key_value.first=="PM_ADDRESSES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        addresses.clear();
-                        for(auto name : names){
-                            addresses.push_back(name);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh counters PMs");
-        Print::PrintError(e.what());
-    }
-
-    firstTime=true;
-    int arraySize = prefixesPM.size();
-    std::string serviceName="LAB/PM/";
-    sequence="reset";
-
-    fileName = "refresh_PMs_cnt.cfg";
-
     if (!boost::filesystem::exists(fileName)) {
         fileName = "./configuration/" + fileName;
     }
 
     try{
         boost::property_tree::ini_parser::read_ini(fileName, tree);
-        
+        sequence="reset";
         for (const auto& section : tree) {
-            if(section.first=="PMA0"||section.first=="PMC0"){
-                serviceName="LAB/PM/"+section.first+"/";
-                std::string addressParameter;
-                if(section.first=="PMA0"){
-                    addressParameter = addresses[0];
-                }
-                else if(section.first=="PMC0"){
-                    addressParameter = addresses[1];
-                }
+            if(section.first=="TCM"){
                 for (const auto& key_value : section.second) {
-                    sequence+="\n0x0000000"+addressParameter+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
-                    services.push_back(serviceName+key_value.second.get_value<std::string>());
-                    if(key_value.second.get_value<std::string>()=="SEL_LAST_HIT_DROPPED_ORBIT"){
-                        servicesRates.push_back(serviceName+"GBT_WORDS_RATE");
-                    }
-                    else if(key_value.second.get_value<std::string>()=="EVENTS_COUNT"){
-                        servicesRates.push_back(serviceName+"EVENTS_COUNT_RATE");
-                    }
-                    else{
-                        servicesRates.push_back(serviceName+"RATE"+key_value.second.get_value<std::string>().substr(5));
-                    }
-                    tcm.addresses[serviceName+key_value.second.get_value<std::string>()]=addressParameter+key_value.first.substr(key_value.first.length()-2);
+                    sequence+="\n0x000000000"+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
+                    services.push_back(serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[0]);
+                    servicesRates.push_back(serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[1]);
+                    tcm.addresses[serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[0]]="00"+key_value.first.substr(key_value.first.length()-2);
+                    tcm.addresses[serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[1]]="00"+key_value.first.substr(key_value.first.length()-2);
                 }
             }
         }
@@ -112,7 +47,7 @@ RefreshMapiPMCNTGroup::RefreshMapiPMCNTGroup(Fred* fred){
     }
 }
 
-string RefreshMapiPMCNTGroup::processInputMessage(string input){
+string RefreshMapiCNTGroup::processInputMessage(string input){
     if(input=="go"){
         return sequence;
     }
@@ -121,7 +56,7 @@ string RefreshMapiPMCNTGroup::processInputMessage(string input){
     return "";
 }
 
-string RefreshMapiPMCNTGroup::processOutputMessage(string output){
+string RefreshMapiCNTGroup::processOutputMessage(string output){
     vector< pair <string, string> > requests;
     std::string value;
     if(output!="failure"){
@@ -139,7 +74,7 @@ string RefreshMapiPMCNTGroup::processOutputMessage(string output){
                 value = output.substr(13, 8);
                 output = output.substr(21);
                 
-                long long hexValue = stoll(value, nullptr, 16);
+                uint32_t hexValue = stoll(value, nullptr, 16);
                 float triggerRate = 0.0;
 
                 if(firstTime){

@@ -32,7 +32,7 @@ void InitFred::processExecution(){
 
     response = this->executeAlfSequence(sequence);
 
-    long long delayA = 0, delayC = 0;
+    uint32_t delayA = 0, delayC = 0;
     try{
         response.erase(remove(response.begin(), response.end(), '\n'), response.end());
         response = response.substr(8);
@@ -63,19 +63,19 @@ void InitFred::processExecution(){
             
             for (const auto& section : tree) {
                 Print::PrintInfo(section.first);
-                std::map<int, long long> confParameters;
+                std::map<int, uint32_t> confParameters;
                 if(section.first=="TCM"){
                     for (const auto& key_value : section.second) {
                         int address = std::stoi(key_value.first.substr(key_value.first.length()-2), nullptr, 16);
                         Print::PrintInfo(key_value.second.get_value<std::string>());
-                        long long value = std::stoll(key_value.second.get_value<std::string>(), nullptr, 16);
+                        uint32_t value = std::stoll(key_value.second.get_value<std::string>(), nullptr, 16);
                         if(address<256){
                             confParameters[address] = value;
                         }
                     }
 
                     if(confParameters.find(0)!=confParameters.end()&&confParameters.find(1)!=confParameters.end()){
-                        long long delay = std::max(std::max((int)(confParameters[0]-delayA), (int)(confParameters[1]-delayC)), 0);
+                        uint32_t delay = std::max(std::max((int)(confParameters[0]-delayA), (int)(confParameters[1]-delayC)), 0);
                         std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                         std::stringstream ss;
                         ss << std::hex << confParameters[0];
@@ -100,7 +100,7 @@ void InitFred::processExecution(){
                         this->executeAlfSequence(sequence);
                     }
                     else if(confParameters.find(0)!=confParameters.end()){
-                        long long delay = std::max((int)(confParameters[0]-delayA), 0);
+                        uint32_t delay = std::max((int)(confParameters[0]-delayA), 0);
                         std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                         std::stringstream ss;
                         ss << std::hex << confParameters[0];
@@ -117,7 +117,7 @@ void InitFred::processExecution(){
                         
                     }
                     else if(confParameters.find(1)!=confParameters.end()){
-                        long long delay = std::max(0, (int)(confParameters[1]-delayC));
+                        uint32_t delay = std::max(0, (int)(confParameters[1]-delayC));
                         std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                         std::stringstream ss;
                         ss << std::hex << confParameters[1];
