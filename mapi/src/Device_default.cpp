@@ -89,7 +89,7 @@ string Device_default::processInputMessage(string input) {
             return "";
         }
     }
-    else if(parameters.size()>1&&parameters[1]=="2"){
+    else if(parameters.size()>1&&(parameters[1]=="2"||parameters[1]=="3")){
         uint32_t num = SWT_creator::parameterValue(parameters[0]);
         bool readonly=false, wrongValue=false, wordFound=false;
         for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
@@ -107,35 +107,13 @@ string Device_default::processInputMessage(string input) {
             }
         }
         if((!readonly)&&(!wrongValue)&&wordFound){
-            SWT_creator::sequenceOperationRMWAND(num, address, sequence);
-            Print::PrintInfo(sequence);
-            return sequence;
-        }
-        else{
-            noRpcRequest=true;
-            this->publishError("Value out of correct range");
-            return "";
-        }
-    }
-    else if(parameters.size()>1&&parameters[1]=="3"){
-        uint32_t num = SWT_creator::parameterValue(parameters[0]);
-        bool readonly=false, wrongValue=false, wordFound=false;
-        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
-            wordFound=true;
-            if(word[1]<=num&&word[2]>=num){
-                if(word[0]==1){
-                    readonly=true;
-                    break;
-                }
-                if(word[1]!=word[2]&&word[6]==0){
-                    wrongValue=true;
-                    break;
-                }
-                break;
+            if(parameters[1]=="2"){
+                SWT_creator::sequenceOperationRMWAND(num, address, sequence);
             }
-        }
-        if((!readonly)&&(!wrongValue)&&wordFound){
-            SWT_creator::sequenceOperationRMWOR(num, address, sequence);
+            else{
+                SWT_creator::sequenceOperationRMWOR(num, address, sequence);
+            }
+            
             Print::PrintInfo(sequence);
             return sequence;
         }
@@ -154,14 +132,11 @@ string Device_default::processOutputMessage(string output) {
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoll(value, nullptr, 16);
-    if(endpoint.find("FPGA_TEMP")!=string::npos){
-        return std::to_string(finalValue * 503.975 / 65536 - 273.15);
-    }
-    else if(endpoint.find("1VPOWER")!=string::npos){
-        return std::to_string(finalValue * 3 / 65536.0);
-    }
-    else if(endpoint.find("18VPOWER")!=string::npos){
-        return std::to_string(finalValue * 3 / 65536.0);
+    if(tcm.tcmEquations[endpoint].first!=""){
+        std::string equation = tcm.tcmEquations[refreshServices[count].second].first;
+        std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[refreshServices[count].second].second,";");
+        std::vector<double> values = std::vector<double>{hexValue};
+        returnValue = std::to_string(Utility::calculateEquation(equation,paramNames,values));
     }
     else if(endpoint.find("TRG_1_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger1rate);
@@ -177,9 +152,6 @@ string Device_default::processOutputMessage(string output) {
     }
     else if(endpoint.find("TRG_5_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger5rate);
-    }
-    else if(endpoint.find("TEMPERATURE")!=string::npos){
-        return std::to_string(finalValue/10.);
     }
     else if(endpoint.find("AVERAGE_TIME")!=string::npos){
         return "";
@@ -218,10 +190,6 @@ string Device_default::processOutputMessage(string output) {
         1024 ; 
         //: 1280);
         return std::to_string(finalValue*phaseStep_ns);
-    }
-    else if(endpoint.find("TRG_ORA_SIGN")!=string::npos||endpoint.find("TRG_ORC_SIGN")!=string::npos
-    ||endpoint.find("TRG_SC_SIGN")!=string::npos||endpoint.find("TRG_C_SIGN")!=string::npos||endpoint.find("TRG_V_SIGN")!=string::npos){
-        return std::to_string(finalValue/128);
     }
     else if(endpoint.find("BOARD_STATUS")!=string::npos){
         int pllLockC = (finalValue)&1;

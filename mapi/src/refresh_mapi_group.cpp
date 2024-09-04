@@ -13,36 +13,12 @@
 #include "SWT_creator.h"
 
 
-RefreshMapiGroup::RefreshMapiGroup(Fred* fred){
+RefreshMapiGroup::RefreshMapiGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices):refreshServices(refreshServices){
     this->fred = fred;
-    firstTime=true;;
-    boost::property_tree::ptree tree;
-
-    std::string serviceName="LAB/READOUTCARDS/TCM0/";
+    firstTime=true;
     sequence="reset";
-
-    std::string fileName = "refresh_data.cfg";
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-        
-        for (const auto& section : tree) {
-            if(section.first=="TCM"){
-                for (const auto& key_value : section.second) {
-                    sequence+="\n0x000000000"+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
-                    services.push_back(serviceName+key_value.second.get_value<std::string>());
-                    //tcm.addresses[serviceName+key_value.second.get_value<std::string>()]="00"+key_value.first.substr(key_value.first.length()-2);
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh TCM");
-        Print::PrintError(e.what());
+    for (const auto& pair : refreshServices) {
+        sequence+="\n0x000"+pair.first+"00000000,write\nread";   
     }
 }
 
@@ -69,7 +45,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
             int maxCount=20000, count=0;
             bool firstIteration = true;
             bool updateService = false;
-            while(output.length()>0&&count<maxCount&&count<services.size()){
+            while(output.length()>0&&count<maxCount&&count<refreshServices.size()){
                 if(!firstIteration){
                     output=output.substr(1);
                 }
@@ -88,24 +64,18 @@ string RefreshMapiGroup::processOutputMessage(string output){
                 }
                 else if(oldValues[count]!=hexValue){
                     oldValues[count]=hexValue;
-                    updateService=true;   
+                    updateService=true;
                 }
 
                 if(updateService){
                     std::string returnValue = std::to_string(hexValue);
-                    if(services[count].find("FPGA_TEMP")!=string::npos){
-                        returnValue = std::to_string(hexValue * 503.975 / 65536 - 273.15);
+                    if(tcm.tcmEquations[refreshServices[count].second.substr(4)].first!=""){
+                        std::string equation = tcm.tcmEquations[refreshServices[count].second.substr(4)].first;
+                        std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[refreshServices[count].second.substr(4)].second,";");
+                        std::vector<double> values = std::vector<double>{hexValue};
+                        returnValue = std::to_string(Utility::calculateEquation(equation,paramNames,values));
                     }
-                    else if(services[count].find("1VPOWER")!=string::npos){
-                        returnValue = std::to_string(hexValue * 3 / 65536.0);
-                    }
-                    else if(services[count].find("18VPOWER")!=string::npos){
-                        returnValue = std::to_string(hexValue * 3 / 65536.0);
-                    }
-                    else if(services[count].find("TEMPERATURE")!=string::npos){
-                        returnValue = std::to_string(hexValue/10.);
-                    }
-                    else if(services[count].find("LASER_DELAY")!=string::npos){
+                    else if(refreshServices[count].second.find("LASER_DELAY")!=string::npos){
                         float tempValue = stoi(value, nullptr, 16);
                         if (tempValue > 10000) {
                             int16_t x = stoi(value, nullptr, 16);
@@ -120,7 +90,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
                         tempValue = tempValue*phaseStep_ns;
                         returnValue = std::to_string(tempValue);
                     }
-                    else if(services[count].find("LASER_DIVIDER")!=string::npos||services[count].find("LASER_FREQUENCY")!=string::npos){
+                    else if(refreshServices[count].second.find("LASER_DIVIDER")!=string::npos||refreshServices[count].second.find("LASER_FREQUENCY")!=string::npos){
                         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
                         uint32_t tempValue = std::stoll(value.substr(2,6), nullptr, 16);
                         float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
@@ -130,7 +100,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
                     
                     
                     }
-                    else if(services[count].find("DELAY_A")!=string::npos||services[count].find("DELAY_C")!=string::npos){
+                    else if(refreshServices[count].second.find("DELAY_A")!=string::npos||refreshServices[count].second.find("DELAY_C")!=string::npos){
                         if (hexValue > 10000) {
                             int16_t x = stoi(value, nullptr, 16);
                             hexValue=-(~x+1);
@@ -143,13 +113,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
                         //: 1280);
                         returnValue = std::to_string(hexValue*phaseStep_ns);
                     }
-                    else if(services[count].find("TRG_ORA_SIGN")!=string::npos||services[count].find("TRG_ORC_SIGN")!=string::npos||services[count].find("TRG_SC_SIGN")!=string::npos
-                    ||services[count].find("TRG_C_SIGN")!=string::npos||services[count].find("TRG_V_SIGN")!=string::npos){
-                        returnValue = std::to_string(hexValue/128);
-                    }
-                    requests.push_back(make_pair(services[count], "FRED,"+returnValue));
-                    //requests.push_back(make_pair(services[count], "0,0"));
-                    
+                    requests.push_back(make_pair(refreshServices[count].second, "FRED,"+returnValue));                    
                 }
                 count++;
             }

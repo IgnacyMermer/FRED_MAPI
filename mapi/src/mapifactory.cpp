@@ -13,6 +13,7 @@
 #include "ORGate.h"
 #include "refresh_mapi_PM_cnt_group.h"
 #include <fstream>
+#include <utility>
 
 
 MapiFactory::MapiFactory(Fred *fred){
@@ -41,6 +42,13 @@ MapiFactory::~MapiFactory(){
 void MapiFactory::generateObjects(){
 
     std::string serviceName="";
+
+    //index 0-TCM, index 1-TCM counters, index 2-PM, index 3 - PM counters
+    std::vector<std::vector<std::pair<std::string, std::string>>> refreshServices;
+    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
+    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
+    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
+    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
 
     std::string fileName = "Devices_addresses.txt";
 
@@ -86,7 +94,7 @@ void MapiFactory::generateObjects(){
                     Print::PrintError("error while opening words configuration");
                 }
             }
-            serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[2];
+            serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[3];
             while(std::getline(fileWords, lineWords)){
                 std::vector<std::string> parametersWord = Utility::splitString(lineWords, ",");
 
@@ -96,9 +104,12 @@ void MapiFactory::generateObjects(){
                         tcm.tcmWords[serviceName]=std::vector<std::vector<uint32_t>>();
                     }
                     tcm.tcmWords[serviceName].push_back(std::vector<uint32_t>());
-                    for(int i=2; i<parametersWord.size(); i++){
+                    for(int i=2; i<8; i++){
                         tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
                     }
+                    if(parametersWord.size()>10&&parametersWord[10]!="-"){
+                        tcm.tcmEquations[serviceName]=std::make_pair(parametersWord[9], parametersWord[10]);
+                    }                
                     wordCount++;
                 }
             }
@@ -106,6 +117,10 @@ void MapiFactory::generateObjects(){
             this->fred->registerMapiObject(fred->Name()+"/"+serviceName, tcmDefault);
             this->mapiObjects.push_back(tcmDefault);
             tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0].substr(3,2);
+            int refreshServicesId = std::stoi(parameters[2]);
+            if(refreshServicesId>=1&&refreshServicesId<=4){
+                refreshServices[refreshServicesId-1].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0].substr(3,2), fred->Name()+"/"+serviceName);
+            }
         }
     }
     catch(exception& e){
@@ -131,10 +146,10 @@ void MapiFactory::generateObjects(){
     HistogramReader* histogramReader = new HistogramReader();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/HISTOGRAM_READER", histogramReader);
     this->mapiObjects.push_back(histogramReader);
-    RefreshMapiGroup *refreshMapiGroup = new RefreshMapiGroup(this->fred);
+    RefreshMapiGroup *refreshMapiGroup = new RefreshMapiGroup(this->fred, refreshServices[0]);
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_MAPI_GROUP",refreshMapiGroup);
     this->mapiObjects.push_back(refreshMapiGroup);
-    RefreshMapiPMGroup* mapiPMgroup = new RefreshMapiPMGroup(this->fred);
+    RefreshMapiPMGroup* mapiPMgroup = new RefreshMapiPMGroup(this->fred, refreshServices[2]);
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_PM_MAPI_GROUP", mapiPMgroup);
     this->mapiObjects.push_back(mapiPMgroup);
     ORGate* orGateA0 = new ORGate("A0");

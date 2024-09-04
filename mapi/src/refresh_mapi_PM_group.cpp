@@ -14,92 +14,12 @@
 #include "SWT_creator.h"
 
 
-RefreshMapiPMGroup::RefreshMapiPMGroup(Fred* fred){
+RefreshMapiPMGroup::RefreshMapiPMGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices):refreshServices(refreshServices){
     this->fred = fred;
     firstTime=true;
-    std::string fileName = "detector_type.cfg";
-    boost::property_tree::ptree tree;
-
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    std::vector<std::string> prefixesPM = {"PMA0", "PMC0"}, addresses = {"02", "16"};
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-
-        /*const std::vector<std::string> prefixesMaxTest = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
-        const std::vector<std::string> addressesMaxTest = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
-        const std::vector<std::string> prefixesFT0 = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8"};
-        const std::vector<std::string> addressesFT0 = {"02", "16", "04", "18", "06", "1A", "08", "1C", "0A", "1E", "0C", "20", "0E", "22", "10", "24", "12", "26"};
-          */
-
-        for (const auto& section : tree) {
-            if(section.first=="CONFIG"){
-                for (const auto& key_value : section.second) {
-                    if(key_value.first=="TYPE"){
-                        
-                    }
-                    else if(key_value.first=="PM_NAMES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        prefixesPM.clear();
-                        for(auto name : names){
-                            prefixesPM.push_back(name);
-                        }
-                    }
-                    else if(key_value.first=="PM_ADDRESSES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        addresses.clear();
-                        for(auto name : names){
-                            addresses.push_back(name);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh TCM");
-        Print::PrintError(e.what());
-    }
-
-    firstTime=true;
-    int arraySize = prefixesPM.size();
-    std::string serviceName="LAB/PM/";
     sequence="reset";
-
-    fileName = "refresh_PMs.cfg";
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-        
-        for (const auto& section : tree) {
-            if(section.first=="PMA0"||section.first=="PMC0"){
-                serviceName="LAB/PM/"+section.first+"/";
-                std::string addressParameter;
-                if(section.first=="PMA0"){
-                    addressParameter = addresses[0];
-                }
-                else if(section.first=="PMC0"){
-                    addressParameter = addresses[1];
-                }
-                for (const auto& key_value : section.second) {
-                    sequence+="\n0x0000000"+addressParameter+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
-                    services.push_back(serviceName+key_value.second.get_value<std::string>());
-                    //tcm.addresses[serviceName+key_value.second.get_value<std::string>()]=addressParameter+key_value.first.substr(key_value.first.length()-2);
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh TCM");
-        Print::PrintError(e.what());
+    for (const auto& pair : refreshServices) {
+        sequence+="\n0x000"+pair.first+"00000000,write\nread";   
     }
 }
 
@@ -123,7 +43,7 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
             int maxCount=20000, count=0;
             bool firstIteration = true;
             bool updateService = false;
-            while(output.length()>0&&count<maxCount&&count<services.size()){
+            while(output.length()>0&&count<maxCount&&count<refreshServices.size()){
                 if(!firstIteration){
                     output=output.substr(1);
                 }
@@ -146,7 +66,7 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
 
                 if(updateService){
                     std::string returnValue = std::to_string(hexValue);
-                    if(services[count].find("TDC_12_PHASE_TUNING")!=string::npos){
+                    if(refreshServices[count].second.find("TDC_12_PHASE_TUNING")!=string::npos){
 
                         //program split two words from one parameter for two values to transfer into signed values.
                         //return "number_1,number_2"
@@ -177,7 +97,7 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
                         }
                         returnValue = returnStr;
                     }
-                    else if(services[count].find("TDC_3_PHASE_TUNING")!=string::npos){
+                    else if(refreshServices[count].second.find("TDC_3_PHASE_TUNING")!=string::npos){
                         std::string returnStr = "";
                         unsigned int x;
                         std::stringstream ss;
@@ -192,36 +112,36 @@ string RefreshMapiPMGroup::processOutputMessage(string output){
                         }
                         returnValue = returnStr;
                     }
-                    else if(services[count].find("RAW_TDC_DATA")!=string::npos){
+                    else if(refreshServices[count].second.find("RAW_TDC_DATA")!=string::npos){
                         std::stringstream ss;
                         ss << std::hex << hexValue;
                         returnValue = "0x"+ss.str();
                     }
-                    else if(services[count].find("ADC0_DISPERSION")!=string::npos||services[count].find("ADC1_DISPERSION")!=string::npos){
+                    else if(refreshServices[count].second.find("ADC0_DISPERSION")!=string::npos||refreshServices[count].second.find("ADC1_DISPERSION")!=string::npos){
                         returnValue = std::to_string(std::sqrt(hexValue));
                     }
-                    else if(services[count].find("TEMPERATURE")!=string::npos){
+                    else if(refreshServices[count].second.find("TEMPERATURE")!=string::npos){
                         returnValue = std::to_string(hexValue/10.0);
                     }
-                    else if(services[count].find("FPGA_TEMP")!=string::npos){
+                    else if(refreshServices[count].second.find("FPGA_TEMP")!=string::npos){
                         returnValue = std::to_string(hexValue * 503.975 / 65536 - 273.15);
                     }
-                    else if(services[count].find("1VPOWER")!=string::npos){
+                    else if(refreshServices[count].second.find("1VPOWER")!=string::npos){
                         returnValue = std::to_string(hexValue * 3 / 65536.0);
                     }
-                    else if(services[count].find("18VPOWER")!=string::npos){
+                    else if(refreshServices[count].second.find("18VPOWER")!=string::npos){
                         returnValue = std::to_string(hexValue * 3 / 65536.0);
                     }
 
-                    if (hexValue > 50000&&(services[count].find("CHANNEL_SETTINGS")!=string::npos||services[count].find("ADC0_BASELINE")!=string::npos
-                    ||services[count].find("ADC1_BASELINE")!=string::npos||services[count].find("ADC0_MEAN")!=string::npos||services[count].find("ADC1_MEAN")!=string::npos
-                    ||services[count].find("ADC1_MEAN")!=string::npos||services[count].find("CFD_ZERO")!=string::npos||services[count].find("ADC_ZERO")!=string::npos
-                    ||services[count].find("TEMPERATURE")!=string::npos)) {
+                    if (hexValue > 50000&&(refreshServices[count].second.find("CHANNEL_SETTINGS")!=string::npos||refreshServices[count].second.find("ADC0_BASELINE")!=string::npos
+                    ||refreshServices[count].second.find("ADC1_BASELINE")!=string::npos||refreshServices[count].second.find("ADC0_MEAN")!=string::npos||refreshServices[count].second.find("ADC1_MEAN")!=string::npos
+                    ||refreshServices[count].second.find("ADC1_MEAN")!=string::npos||refreshServices[count].second.find("CFD_ZERO")!=string::npos||refreshServices[count].second.find("ADC_ZERO")!=string::npos
+                    ||refreshServices[count].second.find("TEMPERATURE")!=string::npos)) {
                         int16_t x = stoi(value, nullptr, 16);
                         hexValue=-(~x+1);
                         returnValue = std::to_string(hexValue);
                     }
-                    requests.push_back(make_pair(services[count], "FRED,"+returnValue));
+                    requests.push_back(make_pair(refreshServices[count].second, "FRED,"+returnValue));
                 }
 
                 count++;

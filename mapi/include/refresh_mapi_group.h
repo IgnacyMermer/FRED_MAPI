@@ -1,10 +1,13 @@
 #include "Fred/Mapi/mapi.h"
 #include "Fred/Mapi/mapigroup.h"
 #include "Fred/fred.h"
+#include <utility>
+
+
 class RefreshMapiGroup: public Mapigroup
 {
 public:
-    RefreshMapiGroup(Fred* fred);
+    RefreshMapiGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
@@ -16,4 +19,5 @@ private:
     string sequence;
     std::vector<std::string> services;
     std::vector<uint32_t> oldValues;
+    std::vector<std::pair<std::string, std::string>> refreshServices;
 };
