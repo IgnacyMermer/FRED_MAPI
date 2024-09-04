@@ -2,7 +2,7 @@
 #include <iostream>
 #include <numeric>
 #include <string>
-#include "TCM_default.h"
+#include "Device_default.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
 #include "TCM_values.h"
@@ -11,42 +11,43 @@
 #include "SWT_creator.h"
 #include <bitset>
 
-TCM_default::TCM_default(std::string endpointParam) {
-    finalValue = 0;
-    endpoint=endpointParam;
-}
+Device_default::Device_default(std::string endpoint, std::string address):endpoint(endpoint), finalValue(0), address(address) {}
 
-string TCM_default::processInputMessage(string input) {
-    std::string address="", sequence="";
+
+string Device_default::processInputMessage(string input) {
+    
     vector<string> parameters = Utility::splitString(input, ",");
-    address = "0000"+tcm.addresses[endpoint];
+
     if(input.length()>5&&input.substr(0,5)=="FRED,"){
         this->publishAnswer(input.substr(5));
         noRpcRequest=true;
         return "0";
     }
+
     if (input == ""||input == "set"||(parameters.size()>1&&parameters[1]=="0")){
-        sequence = "reset\n0x000"+address+"00000000,write\nread";
+        SWT_creator::sequenceOperationRead(address, sequence);
         Print::PrintInfo(sequence);
         return sequence;
     }
     else if(parameters.size()>1&&parameters[1]=="1"){
-        long long num = SWT_creator::parameterValue(parameters[0]);
+        uint32_t num = SWT_creator::parameterValue(parameters[0]);
         bool readonly=false, wrongValue=false;
-        for(std::vector<long long> word : tcm.tcmWords[endpoint]){
+        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
             if(word[0]==1){
                 readonly=true;
                 break;
             }
             if(word[6]!=1){
-                long long maskTemp = ((1<<(word[2]-word[1]+1))-1)<<word[1];
-                if(!((num&maskTemp)>>word[1]>=word[4]&&(num&maskTemp)>>word[1]<=word[5])){
+                uint32_t maskTemp = ((1<<(word[2]-word[1]+1))-1)<<word[1];
+                uint32_t maskNum = (num&maskTemp)>>word[1];
+                if(maskNum<word[4]||maskNum>word[5]){
                     wrongValue=true;
                 }
             }
         }
         if((!readonly)&&(!wrongValue)){
             SWT_creator::sequenceOperationWrite(num, address, sequence);
+            Print::PrintInfo(sequence);
             return sequence;
         }
         else{
@@ -56,12 +57,13 @@ string TCM_default::processInputMessage(string input) {
         }
     }
     else if(parameters.size()>2&&(parameters[1]=="2"||parameters[1]=="3")){
-        long long index = SWT_creator::parameterValue(parameters[0]);
-        long long num = SWT_creator::parameterValue(parameters[2]);
-        bool readonly=false, wrongValue=false;
+        uint32_t index = SWT_creator::parameterValue(parameters[0]);
+        uint32_t num = SWT_creator::parameterValue(parameters[2]);
+        bool readonly=false, wrongValue=false, wordFound=false;
         int firstBit=0, lastBit=0;
-        for(std::vector<long long> word : tcm.tcmWords[endpoint]){
+        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
             if(word[1]<=index&&word[2]>=index){
+                wordFound=true;
                 if(word[0]==1){
                     readonly=true;
                     break;
@@ -75,10 +77,10 @@ string TCM_default::processInputMessage(string input) {
                 break;
             }
         }
-        if((!readonly)&&(!wrongValue)){
-            uint32_t zeros = ((1ULL<<(lastBit-firstBit+1))-1)<<firstBit;
-            uint32_t mask = 0xFFFFFFFF&(~zeros);
+        if((!readonly)&&(!wrongValue)&&wordFound){
+            uint32_t mask = ~(((1ULL<<(lastBit-firstBit+1))-1)<<firstBit);
             SWT_creator::sequenceOperationBits(num, firstBit, mask, address, sequence);
+            Print::PrintInfo(sequence);
             return sequence;
         }
         else{
@@ -88,10 +90,11 @@ string TCM_default::processInputMessage(string input) {
         }
     }
     else if(parameters.size()>1&&parameters[1]=="2"){
-        long long num = SWT_creator::parameterValue(parameters[0]);
-        bool readonly=false, wrongValue=false;
-        for(std::vector<long long> word : tcm.tcmWords[endpoint]){
+        uint32_t num = SWT_creator::parameterValue(parameters[0]);
+        bool readonly=false, wrongValue=false, wordFound=false;
+        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
             if(word[1]<=num&&word[2]>=num){
+                wordFound=true;
                 if(word[0]==1){
                     readonly=true;
                     break;
@@ -103,8 +106,9 @@ string TCM_default::processInputMessage(string input) {
                 break;
             }
         }
-        if((!readonly)&&(!wrongValue)){
+        if((!readonly)&&(!wrongValue)&&wordFound){
             SWT_creator::sequenceOperationRMWAND(num, address, sequence);
+            Print::PrintInfo(sequence);
             return sequence;
         }
         else{
@@ -114,9 +118,10 @@ string TCM_default::processInputMessage(string input) {
         }
     }
     else if(parameters.size()>1&&parameters[1]=="3"){
-        long long num = SWT_creator::parameterValue(parameters[0]);
-        bool readonly=false, wrongValue=false;
-        for(std::vector<long long> word : tcm.tcmWords[endpoint]){
+        uint32_t num = SWT_creator::parameterValue(parameters[0]);
+        bool readonly=false, wrongValue=false, wordFound=false;
+        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
+            wordFound=true;
             if(word[1]<=num&&word[2]>=num){
                 if(word[0]==1){
                     readonly=true;
@@ -129,8 +134,9 @@ string TCM_default::processInputMessage(string input) {
                 break;
             }
         }
-        if((!readonly)&&(!wrongValue)){
+        if((!readonly)&&(!wrongValue)&&wordFound){
             SWT_creator::sequenceOperationRMWOR(num, address, sequence);
+            Print::PrintInfo(sequence);
             return sequence;
         }
         else{
@@ -142,43 +148,43 @@ string TCM_default::processInputMessage(string input) {
 }
 
 
-string TCM_default::processOutputMessage(string output) {
+string Device_default::processOutputMessage(string output) {
   string value;
   try {
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoll(value, nullptr, 16);
-    if(endpoint=="FPGA_TEMP"){
+    if(endpoint.find("FPGA_TEMP")!=string::npos){
         return std::to_string(finalValue * 503.975 / 65536 - 273.15);
     }
-    else if(endpoint=="1VPOWER"){
+    else if(endpoint.find("1VPOWER")!=string::npos){
         return std::to_string(finalValue * 3 / 65536.0);
     }
-    else if(endpoint=="18VPOWER"){
+    else if(endpoint.find("18VPOWER")!=string::npos){
         return std::to_string(finalValue * 3 / 65536.0);
     }
-    else if(endpoint=="TRG_1_RATE"){
+    else if(endpoint.find("TRG_1_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger1rate);
     }
-    else if(endpoint=="TRG_2_RATE"){
+    else if(endpoint.find("TRG_2_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger2rate);
     }
-    else if(endpoint=="TRG_3_RATE"){
+    else if(endpoint.find("TRG_3_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger3rate);
     }
-    else if(endpoint=="TRG_4_RATE"){
+    else if(endpoint.find("TRG_4_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger4rate);
     }
-    else if(endpoint=="TRG_5_RATE"){
+    else if(endpoint.find("TRG_5_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger5rate);
     }
-    else if(endpoint=="TEMPERATURE"){
+    else if(endpoint.find("TEMPERATURE")!=string::npos){
         return std::to_string(finalValue/10.);
     }
-    else if(endpoint=="AVERAGE_TIME"){
+    else if(endpoint.find("AVERAGE_TIME")!=string::npos){
         return "";
     }
-    else if(endpoint=="LASER_DELAY"){
+    else if(endpoint.find("LASER_DELAY")!=string::npos){
         float tempValue = stoi(value, nullptr, 16);
         if (tempValue > 10000) {
             int16_t x = stoi(value, nullptr, 16);
@@ -193,13 +199,13 @@ string TCM_default::processOutputMessage(string output) {
         tempValue = tempValue*phaseStep_ns;
         return std::to_string(tempValue);
     }
-    else if(endpoint=="LASER_DIVIDER"||endpoint=="LASER_FREQUENCY"){
+    else if(endpoint.find("LASER_DIVIDER")!=string::npos){
         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-        long long tempValue = std::stoll(value.substr(2,6), nullptr, 16);
+        uint32_t tempValue = std::stoll(value.substr(2,6), nullptr, 16);
         float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
         updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
     }
-    else if(endpoint=="DELAY_A"||endpoint=="DELAY_C"){
+    else if(endpoint.find("DELAY_A")!=string::npos||endpoint.find("DELAY_C")!=string::npos){
         finalValue = stoi(value, nullptr, 16);
         if (finalValue > 10000) {
             int16_t x = stoi(value, nullptr, 16);
@@ -213,10 +219,11 @@ string TCM_default::processOutputMessage(string output) {
         //: 1280);
         return std::to_string(finalValue*phaseStep_ns);
     }
-    else if(endpoint=="TRG_ORA_SIGN"||endpoint=="TRG_ORC_SIGN"||endpoint=="TRG_SC_SIGN"||endpoint=="TRG_C_SIGN"||endpoint=="TRG_V_SIGN"){
+    else if(endpoint.find("TRG_ORA_SIGN")!=string::npos||endpoint.find("TRG_ORC_SIGN")!=string::npos
+    ||endpoint.find("TRG_SC_SIGN")!=string::npos||endpoint.find("TRG_C_SIGN")!=string::npos||endpoint.find("TRG_V_SIGN")!=string::npos){
         return std::to_string(finalValue/128);
     }
-    else if(endpoint=="BOARD_STATUS"){
+    else if(endpoint.find("BOARD_STATUS")!=string::npos){
         int pllLockC = (finalValue)&1;
         int pllLockA = (finalValue>>1)&1;
         int systemRestarted = (finalValue>>2)&1;
@@ -230,7 +237,7 @@ string TCM_default::processOutputMessage(string output) {
         tcm.act.GBTRxReady=RxReady;
         tcm.act.forceLocalClock=forceLocalClock;
     }
-    else if(endpoint=="BOARD_TYPE"){
+    else if(endpoint.find("BOARD_TYPE")!=string::npos){
         value = output.substr(output.size() - 4, output.size());
         int boardBits = stoi(value, nullptr, 16);
         int detectorSubType = boardBits & 3;

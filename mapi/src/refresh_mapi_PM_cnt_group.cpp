@@ -30,12 +30,6 @@ RefreshMapiPMCNTGroup::RefreshMapiPMCNTGroup(Fred* fred){
     try{
         boost::property_tree::ini_parser::read_ini(fileName, tree);
 
-        /*const std::vector<std::string> prefixesMaxTest = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8","PMA9", "PMC9"};
-        const std::vector<std::string> addressesMaxTest = {"02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16","02", "16"};
-        const std::vector<std::string> prefixesFT0 = {"PMA0", "PMC0","PMA1", "PMC1","PMA2", "PMC2","PMA3", "PMC3","PMA4", "PMC4","PMA5", "PMC5","PMA6", "PMC6","PMA7", "PMC7","PMA8", "PMC8"};
-        const std::vector<std::string> addressesFT0 = {"02", "16", "04", "18", "06", "1A", "08", "1C", "0A", "1E", "0C", "20", "0E", "22", "10", "24", "12", "26"};
-          */
-
         for (const auto& section : tree) {
             if(section.first=="CONFIG"){
                 for (const auto& key_value : section.second) {
@@ -139,7 +133,7 @@ string RefreshMapiPMCNTGroup::processOutputMessage(string output){
                 value = output.substr(13, 8);
                 output = output.substr(21);
                 
-                long long hexValue = stoll(value, nullptr, 16);
+                uint32_t hexValue = stoll(value, nullptr, 16);
                 float triggerRate = 0.0;
 
                 if(firstTime){
@@ -154,7 +148,7 @@ string RefreshMapiPMCNTGroup::processOutputMessage(string output){
                         difference=1000;
                     }
 
-                    triggerRate = abs(hexValue - tcm.temp.trigger5cnt)/difference*1000.0;
+                    triggerRate = abs((long long)(hexValue - tcm.temp.trigger5cnt))/difference*1000.0;
 
                     oldTimes.push_back(milliseconds_since_epoch);
                     
@@ -181,7 +175,7 @@ string RefreshMapiPMCNTGroup::processOutputMessage(string output){
                         difference=1000;
                     }
 
-                    triggerRate = abs(hexValue - oldValues[count])/difference*1000.0;
+                    triggerRate = abs((long long)(hexValue - oldValues[count]))/difference*1000.0;
 
                     oldTimes[count] = milliseconds_since_epoch;
 

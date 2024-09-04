@@ -11,9 +11,9 @@ public:
 
 private:
     Fred* fred;
-    long long hexValue;
+    uint32_t hexValue;
     bool firstTime;
     string sequence;
     std::vector<std::string> services;
-    std::vector<long long> oldValues;
+    std::vector<uint32_t> oldValues;
 };

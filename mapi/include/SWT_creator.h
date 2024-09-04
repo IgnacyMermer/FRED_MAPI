@@ -5,7 +5,11 @@ class SWT_creator{
 public:
     SWT_creator();
 
-    static void sequenceOperationWrite(long long num, std::string address, std::string& sequence){
+    static void sequenceOperationRead(std::string address, std::string& sequence){
+        sequence = "reset\n0x000"+address+"00000000,write\nread";
+    }
+
+    static void sequenceOperationWrite(uint32_t num, std::string address, std::string& sequence){
         std::stringstream ss;
         ss << std::hex << num;
         std::string hex_str = ss.str();
@@ -53,9 +57,8 @@ public:
             data+="0";
         }
         data+=hex_str;
-        long long temp=num*std::pow(2,power);
         ss.str("");
-        ss << std::hex << temp;
+        ss << std::hex << (num*(1<<power));
         std::string data2 = "";
         hex_str = ss.str();
         if(hex_str.length()>8){
@@ -68,8 +71,7 @@ public:
         sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
     }
 
-    static long long parameterValue(std::string strValue){
-        long long inputValue;
+    static uint32_t parameterValue(std::string strValue){
         if(strValue.rfind("0x", 0)==0){
             return std::stoll(strValue.substr(2), nullptr, 16);
         }

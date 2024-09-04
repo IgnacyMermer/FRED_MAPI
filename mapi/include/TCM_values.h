@@ -6,7 +6,7 @@
 
 struct TypeTCM {
     std::map<std::string, std::string> addresses;
-    std::map<std::string, std::vector<std::vector<long long>>> tcmWords;
+    std::map<std::string, std::vector<std::vector<uint32_t>>> tcmWords;
     struct ActualValues {
         int32_t DELAY_A         :16,  //┐
                                 :16,  //┘00

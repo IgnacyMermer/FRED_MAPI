@@ -11,10 +11,10 @@ public:
 
 private:
     Fred* fred;
-    long long hexValue;
+    uint32_t hexValue;
     bool firstTime;
     string sequence;
     std::vector<std::string> services, servicesRates;
-    std::vector<long long> oldValues, oldTimes;
+    std::vector<uint32_t> oldValues, oldTimes;
     std::vector<float> oldValuesRates;
 };

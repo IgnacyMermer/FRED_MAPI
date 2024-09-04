@@ -1,23 +1,13 @@
 #include "mapifactory.h"
 #include "work_status.h"
 #include "Parser/utility.h"
-#include "refresh_data.h"
-#include "PM_status.h"
-#include "TCM_default.h"
-#include "refresh_counters.h"
+#include "Device_default.h"
 #include "initFred.h"
 #include "refresh_mapi_group.h"
 #include "electronic_status.h"
-#include "PM_default.h"
-#include "refresh_PMs.h"
-#include "refresh_PM_counters.h"
 #include "ResetErrors.h"
 #include "initGBT.h"
 #include "TCM_values.h"
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include "histogramReader.h"
 #include "refresh_mapi_PM_group.h"
 #include "ORGate.h"
@@ -50,48 +40,9 @@ MapiFactory::~MapiFactory(){
 **/
 void MapiFactory::generateObjects(){
 
-    std::string fileName = "detector_type.cfg";
-    boost::property_tree::ptree tree;
+    std::string serviceName="";
 
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-    std::vector<std::string> prefixes = {"PMA0", "PMC0"}, addresses = {"02", "16"};
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-
-        for (const auto& section : tree) {
-            if(section.first=="CONFIG"){
-                for (const auto& key_value : section.second) {
-                    if(key_value.first=="TYPE"){
-                        
-                    }
-                    else if(key_value.first=="PM_NAMES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        prefixes.clear();
-                        for(auto name : names){
-                            prefixes.push_back(name);
-                        }
-                    }
-                    else if(key_value.first=="PM_ADDRESSES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        addresses.clear();
-                        for(auto name : names){
-                            addresses.push_back(name);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh TCM");
-        Print::PrintError(e.what());
-    }
-    std::string serviceName=fred->Name()+"/READOUTCARDS/TCM0/";    
-
-    fileName = "Devices_addresses.txt";
+    std::string fileName = "Devices_addresses.txt";
 
     std::ifstream file(fileName);
     if (!file.is_open()) {
@@ -122,10 +73,8 @@ void MapiFactory::generateObjects(){
 
     try{
         std::string line, lineWords, device="";
-        bool deviceIdenticated=false;
         while(std::getline(file, line)) {
             std::vector<std::string> parameters = Utility::splitString(line, ",");
-            bool firstIteration=true;
             int wordCount=0;
             std::string previousAddress="";
             std::string fileNameWords = "Device_addresses_words.txt";
@@ -137,34 +86,26 @@ void MapiFactory::generateObjects(){
                     Print::PrintError("error while opening words configuration");
                 }
             }
+            serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[2];
             while(std::getline(fileWords, lineWords)){
-                if(lineWords==parameters[1]){
-                    deviceIdenticated=true;
-                    firstIteration=true;
-                }
-                else if(deviceIdenticated&&(lineWords.length()>2&&lineWords.substr(0,3)!="reg")){
-                    deviceIdenticated=false;
-                }
+                std::vector<std::string> parametersWord = Utility::splitString(lineWords, ",");
 
-                if(deviceIdenticated&&!firstIteration){
-                    if(parameters[0].substr(3,2)==lineWords.substr(3,2)){
-                        if(previousAddress!=parameters[0].substr(3,2)){
-                            previousAddress=parameters[0].substr(3,2);
-                            tcm.tcmWords[parameters[2]]=std::vector<std::vector<long long>>();
-                        }
-                        tcm.tcmWords[parameters[2]].push_back(std::vector<long long>());
-                        for(std::string temp : Utility::splitString(lineWords.substr(6), ",")){
-                            tcm.tcmWords[parameters[2]][wordCount].push_back(std::stoll(temp));
-                        }
-                        wordCount++;
+                if(parametersWord[1]==parameters[1]&&parametersWord[0]==parameters[0]){
+                    if(previousAddress!=parameters[0]){
+                        previousAddress=parameters[0];
+                        tcm.tcmWords[serviceName]=std::vector<std::vector<uint32_t>>();
                     }
+                    tcm.tcmWords[serviceName].push_back(std::vector<uint32_t>());
+                    for(int i=2; i<parametersWord.size(); i++){
+                        tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
+                    }
+                    wordCount++;
                 }
-                firstIteration=false;
             }
-            TCM_default* tcmDefault = new TCM_default((parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[2]);
-            this->fred->registerMapiObject(fred->Name()+(parameters[1]=="TCM"?"/READOUTCARDS/TCM0/":("/PM/"+parameters[1]+"/"))+parameters[2], tcmDefault);
+            Device_default* tcmDefault = new Device_default(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0].substr(3,2));
+            this->fred->registerMapiObject(fred->Name()+"/"+serviceName, tcmDefault);
             this->mapiObjects.push_back(tcmDefault);
-            tcm.addresses[(parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[2]]=devicesAddresses[parameters[1]]+parameters[0].substr(3,2);
+            tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0].substr(3,2);
         }
     }
     catch(exception& e){
@@ -172,53 +113,15 @@ void MapiFactory::generateObjects(){
         Print::PrintError(e.what());
     }
 
-    int arraySize = prefixes.size();
-
     WorkStatus* workStatus = new WorkStatus();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/WORK_STATUS", workStatus);
     this->mapiObjects.push_back(workStatus);
-    RefreshData* refreshData = new RefreshData();
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_DATA", refreshData);
-    this->mapiObjects.push_back(refreshData);
-    RefreshCounters* refreshCounters = new RefreshCounters();
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_COUNTERS", refreshCounters);
-    this->mapiObjects.push_back(refreshCounters);
     InitFred* initFred = new InitFred();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/INIT_FRED", initFred);
     this->mapiObjects.push_back(initFred);
     ElectronicStatus* electronicStatus = new ElectronicStatus();
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/ELECTRONIC_STATUS", electronicStatus);
     this->mapiObjects.push_back(electronicStatus);
-    RefreshPMs* refreshPMs = new RefreshPMs();
-    this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_PMS", refreshPMs);
-    this->mapiObjects.push_back(refreshPMs);
-    /*for(int j=0; j<arraySize; j++){
-        std::string serviceName=fred->Name()+"/PM/"+prefixes[j]+"/";
-        fileName = "PM_defaults.cfg";
-        if (!boost::filesystem::exists(fileName)) {
-            fileName = "./configuration/" + fileName;
-        }
-        try{
-            boost::property_tree::ini_parser::read_ini(fileName, tree);
-            
-            for (const auto& section : tree) {
-                if(section.first.substr(0,2)=="PM"){
-                    for (const auto& key_value : section.second) {
-                        PM_default* pmDefault = new PM_default(key_value.second.get_value<std::string>(), prefixes[j]);
-                        this->fred->registerMapiObject(serviceName+key_value.second.get_value<std::string>(), pmDefault);
-                        this->mapiObjects.push_back(pmDefault);
-                    }
-                }
-            }
-        }
-        catch(exception& e){
-            Print::PrintInfo("error during creating sequence refresh TCM");
-            Print::PrintError(e.what());
-        }
-    }*/
-    RefreshPMCounters* refreshPMCounters = new RefreshPMCounters();
-    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_PM_COUNTERS", refreshPMCounters);
-    this->mapiObjects.push_back(refreshPMCounters);
     ResetErrors* resetErrors = new ResetErrors();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/RESET_ERRORS", resetErrors);
     this->mapiObjects.push_back(resetErrors);

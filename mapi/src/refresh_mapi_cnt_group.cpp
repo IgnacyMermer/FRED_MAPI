@@ -89,7 +89,7 @@ string RefreshMapiCNTGroup::processOutputMessage(string output){
                         difference=1000;
                     }
 
-                    triggerRate = abs(hexValue - tcm.temp.trigger5cnt)/difference*1000.0;
+                    triggerRate = abs((long long)(hexValue - tcm.temp.trigger5cnt))/difference*1000.0;
 
                     oldTimes.push_back(milliseconds_since_epoch);
                     
@@ -116,7 +116,7 @@ string RefreshMapiCNTGroup::processOutputMessage(string output){
                         difference=1000;
                     }
 
-                    triggerRate = abs(hexValue - oldValues[count])/difference*1000.0;
+                    triggerRate = abs((long long)(hexValue - oldValues[count]))/difference*1000.0;
 
                     oldTimes[count] = milliseconds_since_epoch;
 

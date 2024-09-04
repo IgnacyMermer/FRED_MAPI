@@ -1,13 +1,14 @@
 #include "Fred/Mapi/mapi.h"
 
-class HistogramReader : public Mapi
+
+class Device_default: public Mapi
 {
 public:
-    HistogramReader();
+    Device_default(std::string endpoint, std::string address);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
-    string sequence;
     uint32_t finalValue;
+    string sequence, endpoint, address;
 };

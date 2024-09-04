@@ -122,7 +122,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
                     }
                     else if(services[count].find("LASER_DIVIDER")!=string::npos||services[count].find("LASER_FREQUENCY")!=string::npos){
                         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-                        long long tempValue = std::stoll(value.substr(2,6), nullptr, 16);
+                        uint32_t tempValue = std::stoll(value.substr(2,6), nullptr, 16);
                         float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
 
 
