@@ -4,6 +4,7 @@
 #include "Device_default.h"
 #include "initFred.h"
 #include "refresh_mapi_group.h"
+#include "refresh_mapi_cnt_group.h"
 #include "electronic_status.h"
 #include "ResetErrors.h"
 #include "initGBT.h"
@@ -101,9 +102,9 @@ void MapiFactory::generateObjects(){
                 if(parametersWord[1]==parameters[1]&&parametersWord[0]==parameters[0]){
                     if(previousAddress!=parameters[0]){
                         previousAddress=parameters[0];
-                        tcm.tcmWords[serviceName]=std::vector<std::vector<uint32_t>>();
+                        tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
                     }
-                    tcm.tcmWords[serviceName].push_back(std::vector<uint32_t>());
+                    tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
                     for(int i=2; i<8; i++){
                         tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
                     }
@@ -112,6 +113,9 @@ void MapiFactory::generateObjects(){
                     }                
                     wordCount++;
                 }
+            }
+            if(parameters[3]=="RATE_TRIGGER_2"){
+                Print::PrintInfo("added");
             }
             Device_default* tcmDefault = new Device_default(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0].substr(3,2));
             this->fred->registerMapiObject(fred->Name()+"/"+serviceName, tcmDefault);
@@ -158,7 +162,10 @@ void MapiFactory::generateObjects(){
     ORGate* orGateC0 = new ORGate("C0");
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/OR_GATE_C", orGateC0);
     this->mapiObjects.push_back(orGateC0);
-    RefreshMapiPMCNTGroup* mapiPMCNTGroup = new RefreshMapiPMCNTGroup(this->fred);
+    RefreshMapiCNTGroup* mapiCNTGroup = new RefreshMapiCNTGroup(this->fred, refreshServices[1]);
+    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_MAPI_CNT_GROUP", mapiCNTGroup);
+    this->mapiObjects.push_back(mapiCNTGroup);
+    RefreshMapiPMCNTGroup* mapiPMCNTGroup = new RefreshMapiPMCNTGroup(this->fred, refreshServices[3]);
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_MAPI_PM_CNT_GROUP", mapiPMCNTGroup);
     this->mapiObjects.push_back(mapiPMCNTGroup);
 }

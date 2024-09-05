@@ -14,95 +14,23 @@
 #include "SWT_creator.h"
 
 
-RefreshMapiPMCNTGroup::RefreshMapiPMCNTGroup(Fred* fred){
+RefreshMapiPMCNTGroup::RefreshMapiPMCNTGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices){
     this->fred = fred;
     firstTime=true;
-    std::string fileName = "detector_type.cfg";
-    boost::property_tree::ptree tree;
 
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    std::vector<std::string> prefixesPM = {"PMA0", "PMC0"}, addresses = {"02", "16"};
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-
-        for (const auto& section : tree) {
-            if(section.first=="CONFIG"){
-                for (const auto& key_value : section.second) {
-                    if(key_value.first=="TYPE"){
-                        
-                    }
-                    else if(key_value.first=="PM_NAMES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        prefixesPM.clear();
-                        for(auto name : names){
-                            prefixesPM.push_back(name);
-                        }
-                    }
-                    else if(key_value.first=="PM_ADDRESSES"){
-                        vector<string> names = Utility::splitString(key_value.second.get_value<std::string>(), ",");
-                        addresses.clear();
-                        for(auto name : names){
-                            addresses.push_back(name);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh counters PMs");
-        Print::PrintError(e.what());
-    }
-
-    firstTime=true;
-    int arraySize = prefixesPM.size();
-    std::string serviceName="LAB/PM/";
     sequence="reset";
-
-    fileName = "refresh_PMs_cnt.cfg";
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-        
-        for (const auto& section : tree) {
-            if(section.first=="PMA0"||section.first=="PMC0"){
-                serviceName="LAB/PM/"+section.first+"/";
-                std::string addressParameter;
-                if(section.first=="PMA0"){
-                    addressParameter = addresses[0];
-                }
-                else if(section.first=="PMC0"){
-                    addressParameter = addresses[1];
-                }
-                for (const auto& key_value : section.second) {
-                    sequence+="\n0x0000000"+addressParameter+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
-                    services.push_back(serviceName+key_value.second.get_value<std::string>());
-                    if(key_value.second.get_value<std::string>()=="SEL_LAST_HIT_DROPPED_ORBIT"){
-                        servicesRates.push_back(serviceName+"GBT_WORDS_RATE");
-                    }
-                    else if(key_value.second.get_value<std::string>()=="EVENTS_COUNT"){
-                        servicesRates.push_back(serviceName+"EVENTS_COUNT_RATE");
-                    }
-                    else{
-                        servicesRates.push_back(serviceName+"RATE"+key_value.second.get_value<std::string>().substr(5));
-                    }
-                    tcm.addresses[serviceName+key_value.second.get_value<std::string>()]=addressParameter+key_value.first.substr(key_value.first.length()-2);
-                }
-            }
+    for (const auto& pair : refreshServices) {
+        sequence+="\n0x000"+pair.first+"00000000,write\nread";
+        services.push_back(pair.second);
+        if(pair.second.find("SEL_LAST_HIT_DROPPED_ORBIT", 0)!=string::npos){
+            servicesRates.push_back(std::string(pair.second).replace(pair.second.find("SEL_LAST_HIT_DROPPED_ORBIT", 0), 26, "GBT_WORDS_RATE"));
         }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh TCM");
-        Print::PrintError(e.what());
+        else if(pair.second.find("EVENTS_COUNT", 0)!=string::npos){
+            servicesRates.push_back(std::string(pair.second).replace(pair.second.find("EVENTS_COUNT", 0), 12, "EVENTS_COUNT_RATE"));
+        }
+        else{
+            servicesRates.push_back(std::string(pair.second).replace(pair.second.find("COUNT", 0), 5, "RATE"));
+        }
     }
 }
 
@@ -207,4 +135,5 @@ string RefreshMapiPMCNTGroup::processOutputMessage(string output){
         this->publishError("Failure");
         return "failure";
     }
+    return "0";
 }

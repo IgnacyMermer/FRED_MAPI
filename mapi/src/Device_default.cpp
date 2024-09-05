@@ -30,22 +30,34 @@ string Device_default::processInputMessage(string input) {
         return sequence;
     }
     else if(parameters.size()>1&&parameters[1]=="1"){
-        uint32_t num = SWT_creator::parameterValue(parameters[0]);
-        bool readonly=false, wrongValue=false;
-        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
+        int64_t num = SWT_creator::parameterValue(parameters[0]);
+        bool readonly=false, wrongValue=false, isSigned=false;
+        for(std::vector<int64_t> word : tcm.tcmWords[endpoint]){
             if(word[0]==1){
                 readonly=true;
                 break;
             }
-            if(word[6]!=1){
+            //if signed there must be only one word in register
+            if(word[3]==1){
+                if(tcm.tcmWords[endpoint].size()>1||num<word[4]||num>word[5]){
+                    wrongValue=true;
+                    break;
+                }
+                isSigned=true;
+            }
+            if(word[6]!=1&&(!isSigned)){
                 uint32_t maskTemp = ((1<<(word[2]-word[1]+1))-1)<<word[1];
                 uint32_t maskNum = (num&maskTemp)>>word[1];
                 if(maskNum<word[4]||maskNum>word[5]){
                     wrongValue=true;
                 }
+                break;
             }
         }
         if((!readonly)&&(!wrongValue)){
+            if(isSigned&&num<0){
+                num=~((num*(-1))-1);
+            }
             SWT_creator::sequenceOperationWrite(num, address, sequence);
             Print::PrintInfo(sequence);
             return sequence;
@@ -57,16 +69,19 @@ string Device_default::processInputMessage(string input) {
         }
     }
     else if(parameters.size()>2&&(parameters[1]=="2"||parameters[1]=="3")){
-        uint32_t index = SWT_creator::parameterValue(parameters[0]);
-        uint32_t num = SWT_creator::parameterValue(parameters[2]);
-        bool readonly=false, wrongValue=false, wordFound=false;
+        int64_t index = SWT_creator::parameterValue(parameters[0]);
+        int64_t num = SWT_creator::parameterValue(parameters[2]);
+        bool readonly=false, wrongValue=false, wordFound=false, isSigned=false;
         int firstBit=0, lastBit=0;
-        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
+        for(std::vector<int64_t> word : tcm.tcmWords[endpoint]){
             if(word[1]<=index&&word[2]>=index){
                 wordFound=true;
                 if(word[0]==1){
                     readonly=true;
                     break;
+                }
+                if(word[3]==1){
+                    isSigned=true;
                 }
                 if((num<word[4]||num>word[5])){
                     wrongValue=true;
@@ -79,6 +94,11 @@ string Device_default::processInputMessage(string input) {
         }
         if((!readonly)&&(!wrongValue)&&wordFound){
             uint32_t mask = ~(((1ULL<<(lastBit-firstBit+1))-1)<<firstBit);
+            Print::PrintInfo(std::to_string(num));
+            if(isSigned&&num<0){
+                num=~((num*(-1))-1);
+                Print::PrintInfo(std::to_string(num));
+            }
             SWT_creator::sequenceOperationBits(num, firstBit, mask, address, sequence);
             Print::PrintInfo(sequence);
             return sequence;
@@ -90,9 +110,9 @@ string Device_default::processInputMessage(string input) {
         }
     }
     else if(parameters.size()>1&&(parameters[1]=="2"||parameters[1]=="3")){
-        uint32_t num = SWT_creator::parameterValue(parameters[0]);
+        int64_t num = SWT_creator::parameterValue(parameters[0]);
         bool readonly=false, wrongValue=false, wordFound=false;
-        for(std::vector<uint32_t> word : tcm.tcmWords[endpoint]){
+        for(std::vector<int64_t> word : tcm.tcmWords[endpoint]){
             if(word[1]<=num&&word[2]>=num){
                 wordFound=true;
                 if(word[0]==1){
@@ -133,10 +153,10 @@ string Device_default::processOutputMessage(string output) {
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoll(value, nullptr, 16);
     if(tcm.tcmEquations[endpoint].first!=""){
-        std::string equation = tcm.tcmEquations[refreshServices[count].second].first;
-        std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[refreshServices[count].second].second,";");
-        std::vector<double> values = std::vector<double>{hexValue};
-        returnValue = std::to_string(Utility::calculateEquation(equation,paramNames,values));
+        std::string equation = tcm.tcmEquations[endpoint].first;
+        std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[endpoint].second,";");
+        std::vector<double> values = std::vector<double>{finalValue};
+        return std::to_string(Utility::calculateEquation(equation,paramNames,values));
     }
     else if(endpoint.find("TRG_1_RATE")!=string::npos){
         return std::to_string(tcm.temp.trigger1rate);

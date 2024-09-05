@@ -14,36 +14,16 @@
 #include "SWT_creator.h"
 
 
-RefreshMapiCNTGroup::RefreshMapiCNTGroup(Fred* fred){
+RefreshMapiCNTGroup::RefreshMapiCNTGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices){
     this->fred = fred;
     firstTime=true;
-    std::string serviceName="READOUTCARDS/TCM0/";
 
-    std::string fileName = "refresh_TCM_counters.cfg";
-    boost::property_tree::ptree tree;
-
-    if (!boost::filesystem::exists(fileName)) {
-        fileName = "./configuration/" + fileName;
-    }
-
-    try{
-        boost::property_tree::ini_parser::read_ini(fileName, tree);
-        sequence="reset";
-        for (const auto& section : tree) {
-            if(section.first=="TCM"){
-                for (const auto& key_value : section.second) {
-                    sequence+="\n0x000000000"+key_value.first.substr(key_value.first.length()-2)+"00000000,write\nread";
-                    services.push_back(serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[0]);
-                    servicesRates.push_back(serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[1]);
-                    tcm.addresses[serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[0]]="00"+key_value.first.substr(key_value.first.length()-2);
-                    tcm.addresses[serviceName+Utility::splitString(key_value.second.get_value<std::string>(),",")[1]]="00"+key_value.first.substr(key_value.first.length()-2);
-                }
-            }
-        }
-    }
-    catch(exception& e){
-        Print::PrintInfo("error during creating sequence refresh TCM");
-        Print::PrintError(e.what());
+    sequence="reset";
+    
+    for (const auto& pair : refreshServices) {
+        sequence+="\n0x000"+pair.first+"00000000,write\nread";
+        services.push_back(pair.second);
+        servicesRates.push_back(std::string(pair.second).replace(pair.second.find("COUNT", 0), 5, "RATE"));
     }
 }
 
@@ -126,6 +106,7 @@ string RefreshMapiCNTGroup::processOutputMessage(string output){
                     
                     if(oldValuesRates[count]!=triggerRate){
                         oldValuesRates[count] = triggerRate;
+                        Print::PrintInfo(servicesRates[count]);
                         requests.push_back(make_pair(servicesRates[count], "FRED,"+std::to_string(triggerRate)));
                     }
                     oldValues[count] = hexValue;
@@ -148,4 +129,5 @@ string RefreshMapiCNTGroup::processOutputMessage(string output){
         this->publishError("Failure");
         return "failure";
     }
+    return "0";
 }

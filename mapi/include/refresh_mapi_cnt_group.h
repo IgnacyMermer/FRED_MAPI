@@ -4,7 +4,7 @@
 class RefreshMapiCNTGroup: public Mapigroup
 {
 public:
-    RefreshMapiCNTGroup(Fred* fred);
+    RefreshMapiCNTGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);

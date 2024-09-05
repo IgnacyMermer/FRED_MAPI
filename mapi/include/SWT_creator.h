@@ -9,7 +9,7 @@ public:
         sequence = "reset\n0x000"+address+"00000000,write\nread";
     }
 
-    static void sequenceOperationWrite(uint32_t num, std::string address, std::string& sequence){
+    static void sequenceOperationWrite(int64_t num, std::string address, std::string& sequence){
         std::stringstream ss;
         ss << std::hex << num;
         std::string hex_str = ss.str();
@@ -45,7 +45,7 @@ public:
         sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread\n0x000"+address+"00000000,write\nread";
     }
 
-    static void sequenceOperationBits(int num, int power, int maskNumber, std::string address, std::string& sequence){
+    static void sequenceOperationBits(int64_t num, uint8_t power, uint32_t maskNumber, std::string address, std::string& sequence){
         std::stringstream ss;
         ss << std::hex << maskNumber;
         std::string hex_str = ss.str();
@@ -71,7 +71,7 @@ public:
         sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
     }
 
-    static uint32_t parameterValue(std::string strValue){
+    static int64_t parameterValue(std::string strValue){
         if(strValue.rfind("0x", 0)==0){
             return std::stoll(strValue.substr(2), nullptr, 16);
         }
