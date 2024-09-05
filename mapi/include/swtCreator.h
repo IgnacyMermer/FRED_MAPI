@@ -1,9 +1,10 @@
 #include <vector>
 #include <cmath>
+#include <sstream>
 
-class SWT_creator{
+class SwtCreator{
 public:
-    SWT_creator();
+    SwtCreator();
 
     static void sequenceOperationRead(std::string address, std::string& sequence){
         sequence = "reset\n0x000"+address+"00000000,write\nread";
@@ -110,18 +111,18 @@ public:
             sequence = "reset\n0x000"+address+"00000000,write\nread";
         }
         else {
-            int index = SWT_creator::parameterValue(parameters[0]);
+            int index = SwtCreator::parameterValue(parameters[0]);
             if(parameters.size()>1&&parameters[1]=="1"){
-                SWT_creator::sequenceOperationWrite(index, address, sequence);
+                SwtCreator::sequenceOperationWrite(index, address, sequence);
             }
             else if(parameters.size()>2&&(parameters[1]=="2"||parameters[1]=="3")){
                 sequence="check";
             }
             else if(parameters.size()>1&&parameters[1]=="2"){
-                SWT_creator::sequenceOperationRMWAND(index, address, sequence);
+                SwtCreator::sequenceOperationRMWAND(index, address, sequence);
             }
             else if(parameters.size()>1&&parameters[1]=="3"){
-                SWT_creator::sequenceOperationRMWOR(index, address, sequence);
+                SwtCreator::sequenceOperationRMWOR(index, address, sequence);
             }
             else{
                 sequence="";

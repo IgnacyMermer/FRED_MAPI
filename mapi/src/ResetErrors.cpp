@@ -11,8 +11,8 @@
 #include <bitset>
 #include <thread>
 #include <chrono>
-#include "TCM_values.h"
-#include "SWT_creator.h"
+#include "tcmValues.h"
+#include "swtCreator.h"
 
 
 ResetErrors::ResetErrors() {
@@ -32,7 +32,7 @@ string ResetErrors::processInputMessage(string input) {
         return sequence;
     }
     else{
-        std::string pmAddress = SWT_creator::numberLetter(SWT_creator::parameterValue(parameters[1])*2);
+        std::string pmAddress = SwtCreator::numberLetter(SwtCreator::parameterValue(parameters[1])*2);
         if(input=="GBT"){
             sequence="reset\n0x0020000"+pmAddress+"D8FFFF00FF,write\n0x0030000"+pmAddress+"D800000000,write\n0x0020000"+pmAddress+"D8FFFFFFFF,write\n0x0030000"+pmAddress+"D800001000,write\n0x0020000"+pmAddress+"D8FFFF00FF,write\n0x0030000"+pmAddress+"D800000000,write\n";
             return sequence;

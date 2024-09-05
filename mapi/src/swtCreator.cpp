@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
-#include "SWT_creator.h"
+#include "swtCreator.h"
 
-SWT_creator::SWT_creator(){}
+SwtCreator::SwtCreator(){}
 

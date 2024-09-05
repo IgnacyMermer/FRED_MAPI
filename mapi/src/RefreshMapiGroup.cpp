@@ -2,15 +2,11 @@
 #include <string>
 #include <algorithm>
 #include <unistd.h>
-#include "refresh_mapi_group.h"
+#include "RefreshMapiGroup.h"
 #include "Parser/utility.h"
 #include "Alfred/print.h"
-#include "TCM_values.h"
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include "SWT_creator.h"
+#include "tcmValues.h"
+#include "swtCreator.h"
 
 
 RefreshMapiGroup::RefreshMapiGroup(Fred* fred, std::vector<std::pair<std::string, std::string>> refreshServices):refreshServices(refreshServices){

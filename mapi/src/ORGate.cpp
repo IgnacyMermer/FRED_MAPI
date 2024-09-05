@@ -7,10 +7,10 @@
 #include "ORGate.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
-#include "TCM_values.h"
+#include "tcmValues.h"
 #include <sstream>
 #include <iomanip>
-#include "SWT_creator.h"
+#include "swtCreator.h"
 #include <cmath>
 
 ORGate::ORGate(string endpointParam) {
@@ -30,7 +30,7 @@ string ORGate::processInputMessage(string input) {
     }
     else if(parameters.size()>1&&parameters[1]=="1"){
         std::stringstream ss;
-        ss << std::hex << SWT_creator::parameterValue(parameters[0]);
+        ss << std::hex << SwtCreator::parameterValue(parameters[0]);
         std::string hex_str = ss.str();
         if(hex_str.length()>8){
             hex_str=hex_str.substr(hex_str.length()-4);

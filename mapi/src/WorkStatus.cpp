@@ -2,7 +2,7 @@
 #include <iostream>
 #include <numeric>
 #include <string>
-#include "work_status.h"
+#include "WorkStatus.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
 

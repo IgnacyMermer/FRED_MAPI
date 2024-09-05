@@ -2,13 +2,13 @@
 #include <iostream>
 #include <numeric>
 #include <string>
-#include "histogramReader.h"
+#include "HistogramReader.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
-#include "TCM_values.h"
+#include "tcmValues.h"
 #include <sstream>
 #include <cmath>
-#include "SWT_creator.h"
+#include "swtCreator.h"
 
 
 HistogramReader::HistogramReader() {

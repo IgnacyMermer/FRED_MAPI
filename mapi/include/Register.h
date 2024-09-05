@@ -1,10 +1,10 @@
 #include "Fred/Mapi/mapi.h"
 
 
-class Device_default: public Mapi
+class Register: public Mapi
 {
 public:
-    Device_default(std::string endpoint, std::string address);
+    Register(std::string endpoint, std::string address);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);

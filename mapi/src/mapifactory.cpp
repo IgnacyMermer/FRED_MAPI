@@ -1,18 +1,18 @@
 #include "mapifactory.h"
-#include "work_status.h"
+#include "WorkStatus.h"
 #include "Parser/utility.h"
-#include "Device_default.h"
-#include "initFred.h"
-#include "refresh_mapi_group.h"
-#include "refresh_mapi_cnt_group.h"
-#include "electronic_status.h"
+#include "Register.h"
+#include "InitFred.h"
+#include "RefreshMapiGroup.h"
+#include "RefreshMapiCntGroup.h"
+#include "ElectronicStatus.h"
 #include "ResetErrors.h"
-#include "initGBT.h"
-#include "TCM_values.h"
-#include "histogramReader.h"
-#include "refresh_mapi_PM_group.h"
+#include "InitGBT.h"
+#include "tcmValues.h"
+#include "HistogramReader.h"
+#include "RefreshMapiPMGroup.h"
 #include "ORGate.h"
-#include "refresh_mapi_PM_cnt_group.h"
+#include "RefreshMapiPMCntGroup.h"
 #include <fstream>
 #include <utility>
 
@@ -82,12 +82,15 @@ void MapiFactory::generateObjects(){
 
     try{
         std::string line, lineWords, device="";
+        Register* registerMapi = nullptr;
+        
         while(std::getline(file, line)) {
+            
             std::vector<std::string> parameters = Utility::splitString(line, ",");
             int wordCount=0;
-            std::string previousAddress="";
-            std::string fileNameWords = "Device_addresses_words.txt";
+            std::string previousAddress="", fileNameWords = "Device_addresses_words.txt";
             std::ifstream fileWords(fileNameWords);
+            
             if (!fileWords.is_open()) {
                 fileNameWords = "./configuration/" + fileNameWords;
                 fileWords.open(fileNameWords);
@@ -95,7 +98,9 @@ void MapiFactory::generateObjects(){
                     Print::PrintError("error while opening words configuration");
                 }
             }
+
             serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[3];
+            
             while(std::getline(fileWords, lineWords)){
                 std::vector<std::string> parametersWord = Utility::splitString(lineWords, ",");
 
@@ -104,26 +109,28 @@ void MapiFactory::generateObjects(){
                         previousAddress=parameters[0];
                         tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
                     }
+                    
                     tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
+                    
                     for(int i=2; i<8; i++){
                         tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
                     }
+                    
                     if(parametersWord.size()>10&&parametersWord[10]!="-"){
                         tcm.tcmEquations[serviceName]=std::make_pair(parametersWord[9], parametersWord[10]);
                     }                
+                    
                     wordCount++;
                 }
             }
-            if(parameters[3]=="RATE_TRIGGER_2"){
-                Print::PrintInfo("added");
-            }
-            Device_default* tcmDefault = new Device_default(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0].substr(3,2));
-            this->fred->registerMapiObject(fred->Name()+"/"+serviceName, tcmDefault);
-            this->mapiObjects.push_back(tcmDefault);
-            tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0].substr(3,2);
+            registerMapi = new Register(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0]);
+            this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
+            this->mapiObjects.push_back(registerMapi);
+
+            tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0];
             int refreshServicesId = std::stoi(parameters[2]);
             if(refreshServicesId>=1&&refreshServicesId<=4){
-                refreshServices[refreshServicesId-1].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0].substr(3,2), fred->Name()+"/"+serviceName);
+                refreshServices[refreshServicesId-1].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
             }
         }
     }

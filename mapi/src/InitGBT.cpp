@@ -2,17 +2,13 @@
 #include <iostream>
 #include <numeric>
 #include <string>
-#include "initGBT.h"
+#include "InitGBT.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
-#include "TCM_values.h"
+#include "tcmValues.h"
 #include <sstream>
 #include <cmath>
-#include "SWT_creator.h"
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
+#include "swtCreator.h"
 
 
 InitGBT::InitGBT(): IndefiniteMapi::IndefiniteMapi() {}
@@ -49,7 +45,7 @@ void InitGBT::processExecution() {
     sequence="reset";
     for(int i=0; i<20; ++i){
         if(!(pmMaskSpi>>i & 1)){
-            SWT_creator::sequenceOperationRMWOR(i, "0000001E", tempStr);
+            SwtCreator::sequenceOperationRMWOR(i, "0000001E", tempStr);
             sequence+=tempStr.substr(5);
         }
     }
@@ -59,12 +55,12 @@ void InitGBT::processExecution() {
     for(int i=0; i<20; ++i){
         pmNumber+=0x2;
         try{
-            response = this->executeAlfSequence("reset\n0x0000000"+SWT_creator::numberLetter(pmNumber)+"FE00000000,write\nread");
+            response = this->executeAlfSequence("reset\n0x0000000"+SwtCreator::numberLetter(pmNumber)+"FE00000000,write\nread");
             if(response[response.length()-1]=='\n'){
                 response=response.substr(0, response.length()-1);
             }
             if(response=="failure"||(response.length()>10&&response.substr(response.length()-8)=="FFFFFFFF")){
-                SWT_creator::sequenceOperationRMWAND(i, "0000001E", tempStr);
+                SwtCreator::sequenceOperationRMWAND(i, "0000001E", tempStr);
                 sequence+=tempStr.substr(5);
             }
         }

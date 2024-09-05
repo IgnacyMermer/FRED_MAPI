@@ -2,10 +2,10 @@
 #include <iostream>
 #include <numeric>
 #include <string>
-#include "electronic_status.h"
+#include "ElectronicStatus.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
-#include "TCM_values.h"
+#include "tcmValues.h"
 #include <sstream>
 
 

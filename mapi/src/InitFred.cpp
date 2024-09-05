@@ -2,10 +2,10 @@
 #include <iostream>
 #include <numeric>
 #include <string>
-#include "initFred.h"
+#include "InitFred.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
-#include "TCM_values.h"
+#include "tcmValues.h"
 #include <sstream>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
