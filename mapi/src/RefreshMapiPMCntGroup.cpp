@@ -100,6 +100,10 @@ string RefreshMapiPMCNTGroup::processOutputMessage(string output){
                     }
                     requests.push_back(make_pair(services[count], "FRED,"+std::to_string(hexValue)));
                 }
+                else if(oldValuesRates[count]!=0){
+                    requests.push_back(make_pair(servicesRates[count], "FRED,0"));
+                    oldValuesRates[count]=0;
+                }
                 count++;
             }
             firstTime=false;

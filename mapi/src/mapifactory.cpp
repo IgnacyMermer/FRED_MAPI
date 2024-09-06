@@ -45,12 +45,10 @@ void MapiFactory::generateObjects(){
 
     std::string serviceName="";
 
-    //index 0-TCM, index 1-TCM counters, index 2-PM, index 3 - PM counters
-    std::vector<std::vector<std::pair<std::string, std::string>>> refreshServices;
-    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
-    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
-    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
-    refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
+    std::vector<std::pair<std::string, std::string>> refreshServicesTCM;
+    std::vector<std::pair<std::string, std::string>> refreshServicesTCMCnt;
+    std::map<std::string, std::vector<std::pair<std::string, std::string>>> refreshServicesPM;
+    std::map<std::string, std::vector<std::pair<std::string, std::string>>> refreshServicesPMCnt;
 
     DatabaseInterface* db;
     bool dbError = false;
@@ -65,7 +63,13 @@ void MapiFactory::generateObjects(){
             vector<vector<MultiBase*> > registerResult = db->executeQuery("SELECT addresses.*, devices.NAME, devices.ADDRESS FROM DEVICE_ADDRESSES addresses INNER JOIN DEVICES devices ON addresses.DEVICE_ID=devices.ID", status);
             
             if(status){
-                for(vector<MultiBase*> row : registerResult){                        
+                std::string previousDeviceName="";
+                for(vector<MultiBase*> row : registerResult){
+                    if(previousDeviceName!=row[6]->getString()&&row[6]->getString()!="TCM"){
+                        previousDeviceName=row[6]->getString();
+                        refreshServicesPM[row[6]->getString()]=std::vector<std::pair<std::string, std::string>>();
+                        refreshServicesPMCnt[row[6]->getString()]=std::vector<std::pair<std::string, std::string>>();
+                    }                      
                     int wordCount=0;
 
                     serviceName = (row[6]->getString()=="TCM"?"READOUTCARDS/TCM0/":("PM/"+row[6]->getString()+"/"))+row[3]->getString();
@@ -73,6 +77,7 @@ void MapiFactory::generateObjects(){
                     //get from db words for single registers
                     vector<vector<MultiBase*> > addressResult = db->executeQuery("SELECT addresses.*, devices.NAME as DEVICE_NAME, devices.ADDRESS AS DEVICE_ADDRESS FROM DEVICE_ADDRESSES_WORDS addresses INNER JOIN DEVICES devices ON addresses.device_id=devices.id WHERE addresses.DEVICE_ID="
                     +std::to_string(row[1]->getInt())+" AND addresses.ADDRESS=\'"+row[2]->getString()+"\'", status);
+
                     bool firstIterationAddress = true;
                     for(vector<MultiBase*> rowAddress : addressResult){
                         //save locally register words for comparing values and allow WinCC for specific operations on registers
@@ -102,9 +107,20 @@ void MapiFactory::generateObjects(){
                     // save locally address of DIM service 
                     tcm.addresses[serviceName]=row[7]->getString()+row[2]->getString();
                     // if service must be refresh we save it to specific local refresh array
-                    int refreshServicesId = row[4]->getInt();
-                    if(refreshServicesId>=1&&refreshServicesId<=4){
-                        refreshServices[refreshServicesId-1].emplace_back("0000"+row[7]->getString()+row[2]->getString(), fred->Name()+"/"+serviceName);
+
+                    switch(row[4]->getInt()){
+                        case 1:
+                            refreshServicesTCM.emplace_back("0000"+row[7]->getString()+row[2]->getString(), fred->Name()+"/"+serviceName);
+                            break;
+                        case 2:
+                            refreshServicesTCMCnt.emplace_back("0000"+row[7]->getString()+row[2]->getString(), fred->Name()+"/"+serviceName);
+                            break;
+                        case 3:
+                            refreshServicesPM[row[6]->getString()].emplace_back("0000"+row[7]->getString()+row[2]->getString(), fred->Name()+"/"+serviceName);
+                            break;
+                        case 4:
+                            refreshServicesPMCnt[row[6]->getString()].emplace_back("0000"+row[7]->getString()+row[2]->getString(), fred->Name()+"/"+serviceName);
+                            break;
                     }
                 }
             }
@@ -151,7 +167,7 @@ void MapiFactory::generateObjects(){
         }
 
         try{
-            std::string line, lineWords, device="";
+            std::string line, lineWords, device="", previousDeviceName="";
             Register* registerMapi = nullptr;
             
             while(std::getline(file, line)) {
@@ -167,6 +183,12 @@ void MapiFactory::generateObjects(){
                     if(!fileWords.is_open()){
                         Print::PrintError("error while opening words configuration");
                     }
+                }
+
+                 if(previousDeviceName!=parameters[1]&&parameters[1]!="TCM"){
+                    previousDeviceName=parameters[1];
+                    refreshServicesPM[parameters[1]]=std::vector<std::pair<std::string, std::string>>();
+                    refreshServicesPMCnt[parameters[1]]=std::vector<std::pair<std::string, std::string>>();
                 }
 
                 serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[3];
@@ -199,8 +221,19 @@ void MapiFactory::generateObjects(){
 
                 tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0];
                 int refreshServicesId = std::stoi(parameters[2]);
-                if(refreshServicesId>=1&&refreshServicesId<=4){
-                    refreshServices[refreshServicesId-1].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
+                switch(refreshServicesId){
+                    case 1:
+                        refreshServicesTCM.emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
+                        break;
+                    case 2:
+                        refreshServicesTCMCnt.emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
+                        break;
+                    case 3:
+                        refreshServicesPM[parameters[1]].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
+                        break;
+                    case 4:
+                        refreshServicesPMCnt[parameters[1]].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
+                        break;
                 }
             }
         }
@@ -208,6 +241,20 @@ void MapiFactory::generateObjects(){
             Print::PrintInfo("error during get all default TCM");
             Print::PrintError(e.what());
         }
+    }
+
+    RefreshMapiPMGroup* mapiPMgroup = nullptr;
+    for(auto& pair : refreshServicesPM){
+        mapiPMgroup = new RefreshMapiPMGroup(this->fred, pair.second);
+        this->fred->registerMapiObject(fred->Name()+"/PM/"+pair.first+"/REFRESH_PM_MAPI_GROUP", mapiPMgroup);
+        this->mapiObjects.push_back(mapiPMgroup);
+    }
+
+    RefreshMapiPMCNTGroup* mapiPMCNTGroup = nullptr;
+    for(auto& pair : refreshServicesPMCnt){
+        mapiPMCNTGroup = new RefreshMapiPMCNTGroup(this->fred, pair.second);
+        this->fred->registerMapiObject(fred->Name()+"/PM/"+pair.first+"/REFRESH_MAPI_PM_CNT_GROUP", mapiPMCNTGroup);
+        this->mapiObjects.push_back(mapiPMCNTGroup);
     }
 
     WorkStatus* workStatus = new WorkStatus();
@@ -228,24 +275,18 @@ void MapiFactory::generateObjects(){
     HistogramReader* histogramReader = new HistogramReader();
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/HISTOGRAM_READER", histogramReader);
     this->mapiObjects.push_back(histogramReader);
-    RefreshMapiGroup *refreshMapiGroup = new RefreshMapiGroup(this->fred, refreshServices[0]);
+    RefreshMapiGroup *refreshMapiGroup = new RefreshMapiGroup(this->fred, refreshServicesTCM);
     this->fred->registerMapiObject(fred->Name() + "/READOUTCARDS/TCM0/REFRESH_MAPI_GROUP",refreshMapiGroup);
     this->mapiObjects.push_back(refreshMapiGroup);
-    RefreshMapiPMGroup* mapiPMgroup = new RefreshMapiPMGroup(this->fred, refreshServices[2]);
-    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_PM_MAPI_GROUP", mapiPMgroup);
-    this->mapiObjects.push_back(mapiPMgroup);
     ORGate* orGateA0 = new ORGate("A0");
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/OR_GATE_A", orGateA0);
     this->mapiObjects.push_back(orGateA0);
     ORGate* orGateC0 = new ORGate("C0");
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/OR_GATE_C", orGateC0);
     this->mapiObjects.push_back(orGateC0);
-    RefreshMapiCNTGroup* mapiCNTGroup = new RefreshMapiCNTGroup(this->fred, refreshServices[1]);
+    RefreshMapiCNTGroup* mapiCNTGroup = new RefreshMapiCNTGroup(this->fred, refreshServicesTCMCnt);
     this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_MAPI_CNT_GROUP", mapiCNTGroup);
     this->mapiObjects.push_back(mapiCNTGroup);
-    RefreshMapiPMCNTGroup* mapiPMCNTGroup = new RefreshMapiPMCNTGroup(this->fred, refreshServices[3]);
-    this->fred->registerMapiObject(fred->Name()+"/READOUTCARDS/TCM0/REFRESH_MAPI_PM_CNT_GROUP", mapiPMCNTGroup);
-    this->mapiObjects.push_back(mapiPMCNTGroup);
 }
 
 
