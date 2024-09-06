@@ -14,18 +14,22 @@
 Register::Register(std::string endpoint, std::string address):endpoint(endpoint), finalValue(0), address(address) {}
 
 string Register::processInputMessage(string input) {
-    vector<string> parameters = Utility::splitString(input, ",");
 
+    //message from refresh mapi group
     if(WordsUtility::mapiMessage(input)){
         this->publishAnswer(input.substr(5));
         noRpcRequest=true;
         return "0";
     }
 
-    if (WordsUtility::isReadonly(parameters)){
+    vector<string> parameters = Utility::splitString(input, ",");
+
+    //read input message
+    if (WordsUtility::readMessage(parameters)){
         SwtCreator::sequenceOperationRead(address, sequence);
         return sequence;
     }
+    //write value on register input message
     else if(WordsUtility::writeMessage(parameters)){
         int64_t num = SwtCreator::parameterValue(parameters[0]);
         bool isSigned=false;
@@ -42,6 +46,7 @@ string Register::processInputMessage(string input) {
             return "";
         }
     }
+    //write value on specific bits in register
     else if(WordsUtility::writeWordMessage(parameters)){
         int64_t index = SwtCreator::parameterValue(parameters[0]);
         int64_t num = SwtCreator::parameterValue(parameters[2]);
@@ -63,6 +68,7 @@ string Register::processInputMessage(string input) {
             return "";
         }
     }
+    //set or clear one bit
     else if(WordsUtility::orAndMessage(parameters)){
         int64_t num = SwtCreator::parameterValue(parameters[0]);
         if(WordsUtility::checkWord(endpoint, num)){

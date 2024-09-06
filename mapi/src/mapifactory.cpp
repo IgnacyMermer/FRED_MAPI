@@ -15,6 +15,7 @@
 #include "RefreshMapiPMCntGroup.h"
 #include <fstream>
 #include <utility>
+#include "Database/databaseinterface.h"
 
 
 MapiFactory::MapiFactory(Fred *fred){
@@ -51,92 +52,162 @@ void MapiFactory::generateObjects(){
     refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
     refreshServices.push_back(std::vector<std::pair<std::string, std::string>>());
 
-    std::string fileName = "Devices_addresses.txt";
+    DatabaseInterface* db;
+    bool dbError = false;
+    //check database connection
+    if(db->isConnected()){
+        Print::PrintInfo("DB connected");
+        bool status=false;
+        try{
 
-    std::ifstream file(fileName);
-    if (!file.is_open()) {
-        fileName = "./configuration/" + fileName;
-        file.open(fileName);
-        if(!file.is_open()){
-            Print::PrintError("error while opening devices addresses configuration");
-        }
-    }
-
-    std::string fileNameDevices = "Devices.txt";
-
-    std::ifstream fileDevices(fileNameDevices);
-    if (!fileDevices.is_open()) {
-        fileNameDevices = "./configuration/" + fileNameDevices;
-        fileDevices.open(fileNameDevices);
-        if(!fileDevices.is_open()){
-            Print::PrintError("error while opening devices configuration");
-        }
-    }
-
-    std::map<std::string, std::string> devicesAddresses;
-    std::string lineDevice;
-
-    while(std::getline(fileDevices, lineDevice)) {
-        devicesAddresses[Utility::splitString(lineDevice, ",")[0]]=Utility::splitString(lineDevice, ",")[1];
-    }
-
-    try{
-        std::string line, lineWords, device="";
-        Register* registerMapi = nullptr;
-        
-        while(std::getline(file, line)) {
+            Register* registerMapi = nullptr;
+            //get from db register addresses with services names 
+            vector<vector<MultiBase*> > registerResult = db->executeQuery("SELECT addresses.*, devices.NAME, devices.ADDRESS FROM DEVICE_ADDRESSES addresses INNER JOIN DEVICES devices ON addresses.DEVICE_ID=devices.ID", status);
             
-            std::vector<std::string> parameters = Utility::splitString(line, ",");
-            int wordCount=0;
-            std::string previousAddress="", fileNameWords = "Device_addresses_words.txt";
-            std::ifstream fileWords(fileNameWords);
-            
-            if (!fileWords.is_open()) {
-                fileNameWords = "./configuration/" + fileNameWords;
-                fileWords.open(fileNameWords);
-                if(!fileWords.is_open()){
-                    Print::PrintError("error while opening words configuration");
+            if(status){
+                for(vector<MultiBase*> row : registerResult){                        
+                    int wordCount=0;
+
+                    serviceName = (row[6]->getString()=="TCM"?"READOUTCARDS/TCM0/":("PM/"+row[6]->getString()+"/"))+row[3]->getString();
+
+                    //get from db words for single registers
+                    vector<vector<MultiBase*> > addressResult = db->executeQuery("SELECT addresses.*, devices.NAME as DEVICE_NAME, devices.ADDRESS AS DEVICE_ADDRESS FROM DEVICE_ADDRESSES_WORDS addresses INNER JOIN DEVICES devices ON addresses.device_id=devices.id WHERE addresses.DEVICE_ID="
+                    +std::to_string(row[1]->getInt())+" AND addresses.ADDRESS=\'"+row[2]->getString()+"\'", status);
+                    bool firstIterationAddress = true;
+                    for(vector<MultiBase*> rowAddress : addressResult){
+                        //save locally register words for comparing values and allow WinCC for specific operations on registers
+                        if(firstIterationAddress){
+                            firstIterationAddress=false;
+                            tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
+                        }
+                        
+                        tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
+                        
+                        for(int i=1; i<8; i++){
+                            tcm.tcmWords[serviceName][wordCount].push_back((rowAddress[i]->getInt()));
+                        }
+
+                        //if register have specific equations with passed values from WinCC, save locally equation with variables names
+                        if(rowAddress[9]->getString()!="-"){
+                            tcm.tcmEquations[serviceName]=std::make_pair(rowAddress[8]->getString(), rowAddress[9]->getString());
+                        }   
+                        
+                        wordCount++;
+                    }
+
+                    // add service to MAPI
+                    registerMapi = new Register(serviceName, "0000"+row[7]->getString()+row[2]->getString());
+                    this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
+                    this->mapiObjects.push_back(registerMapi);
+                    // save locally address of DIM service 
+                    tcm.addresses[serviceName]=row[7]->getString()+row[2]->getString();
+                    // if service must be refresh we save it to specific local refresh array
+                    int refreshServicesId = row[4]->getInt();
+                    if(refreshServicesId>=1&&refreshServicesId<=4){
+                        refreshServices[refreshServicesId-1].emplace_back("0000"+row[7]->getString()+row[2]->getString(), fred->Name()+"/"+serviceName);
+                    }
                 }
             }
-
-            serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[3];
-            
-            while(std::getline(fileWords, lineWords)){
-                std::vector<std::string> parametersWord = Utility::splitString(lineWords, ",");
-
-                if(parametersWord[1]==parameters[1]&&parametersWord[0]==parameters[0]){
-                    if(previousAddress!=parameters[0]){
-                        previousAddress=parameters[0];
-                        tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
-                    }
-                    
-                    tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
-                    
-                    for(int i=2; i<8; i++){
-                        tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
-                    }
-                    
-                    if(parametersWord.size()>10&&parametersWord[10]!="-"){
-                        tcm.tcmEquations[serviceName]=std::make_pair(parametersWord[9], parametersWord[10]);
-                    }                
-                    
-                    wordCount++;
-                }
-            }
-            registerMapi = new Register(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0]);
-            this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
-            this->mapiObjects.push_back(registerMapi);
-
-            tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0];
-            int refreshServicesId = std::stoi(parameters[2]);
-            if(refreshServicesId>=1&&refreshServicesId<=4){
-                refreshServices[refreshServicesId-1].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
-            }
+        }
+        catch(exception& e){
+            Print::PrintInfo("error during get all default TCM");
+            Print::PrintError(e.what());
         }
     }
-    catch(exception& e){
-        Print::PrintInfo("error during get all default TCM");
-        Print::PrintError(e.what());
+    else{
+        dbError=true;
+        Print::PrintError("Database not connected");
+    }
+
+    if(dbError){
+        Print::PrintInfo("DB erorrorr");
+        std::string fileName = "Devices_addresses.txt";
+
+        std::ifstream file(fileName);
+        if (!file.is_open()) {
+            fileName = "./configuration/" + fileName;
+            file.open(fileName);
+            if(!file.is_open()){
+                Print::PrintError("error while opening devices addresses configuration");
+            }
+        }
+
+        std::string fileNameDevices = "Devices.txt";
+
+        std::ifstream fileDevices(fileNameDevices);
+        if (!fileDevices.is_open()) {
+            fileNameDevices = "./configuration/" + fileNameDevices;
+            fileDevices.open(fileNameDevices);
+            if(!fileDevices.is_open()){
+                Print::PrintError("error while opening devices configuration");
+            }
+        }
+
+        std::map<std::string, std::string> devicesAddresses;
+        std::string lineDevice;
+
+        while(std::getline(fileDevices, lineDevice)) {
+            devicesAddresses[Utility::splitString(lineDevice, ",")[0]]=Utility::splitString(lineDevice, ",")[1];
+        }
+
+        try{
+            std::string line, lineWords, device="";
+            Register* registerMapi = nullptr;
+            
+            while(std::getline(file, line)) {
+                
+                std::vector<std::string> parameters = Utility::splitString(line, ",");
+                int wordCount=0;
+                std::string previousAddress="", fileNameWords = "Device_addresses_words.txt";
+                std::ifstream fileWords(fileNameWords);
+                
+                if (!fileWords.is_open()) {
+                    fileNameWords = "./configuration/" + fileNameWords;
+                    fileWords.open(fileNameWords);
+                    if(!fileWords.is_open()){
+                        Print::PrintError("error while opening words configuration");
+                    }
+                }
+
+                serviceName = (parameters[1]=="TCM"?"READOUTCARDS/TCM0/":("PM/"+parameters[1]+"/"))+parameters[3];
+                
+                while(std::getline(fileWords, lineWords)){
+                    std::vector<std::string> parametersWord = Utility::splitString(lineWords, ",");
+
+                    if(parametersWord[1]==parameters[1]&&parametersWord[0]==parameters[0]){
+                        if(previousAddress!=parameters[0]){
+                            previousAddress=parameters[0];
+                            tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
+                        }
+                        
+                        tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
+                        
+                        for(int i=2; i<8; i++){
+                            tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
+                        }
+                        
+                        if(parametersWord.size()>10&&parametersWord[10]!="-"){
+                            tcm.tcmEquations[serviceName]=std::make_pair(parametersWord[9], parametersWord[10]);
+                        }                
+                        
+                        wordCount++;
+                    }
+                }
+                registerMapi = new Register(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0]);
+                this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
+                this->mapiObjects.push_back(registerMapi);
+
+                tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0];
+                int refreshServicesId = std::stoi(parameters[2]);
+                if(refreshServicesId>=1&&refreshServicesId<=4){
+                    refreshServices[refreshServicesId-1].emplace_back("0000"+devicesAddresses[parameters[1]]+parameters[0], fred->Name()+"/"+serviceName);
+                }
+            }
+        }
+        catch(exception& e){
+            Print::PrintInfo("error during get all default TCM");
+            Print::PrintError(e.what());
+        }
     }
 
     WorkStatus* workStatus = new WorkStatus();

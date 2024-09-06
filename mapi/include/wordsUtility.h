@@ -9,7 +9,7 @@ class WordsUtility{
 public:
     WordsUtility();
 
-    static bool isReadonly(std::vector<std::string> parameters){
+    static bool readMessage(std::vector<std::string> parameters){
         return (parameters.size()>1&&parameters[1]=="0")||parameters[0]=="read";
     }
 
