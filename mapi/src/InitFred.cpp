@@ -7,7 +7,7 @@
 #include "Parser/utility.h"
 #include "tcmValues.h"
 #include <sstream>
-#include <boost/filesystem.hpp>
+/*#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -15,14 +15,14 @@
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
-namespace pt = boost::property_tree;
+namespace pt = boost::property_tree;*/
 
 
 InitFred::InitFred() : IndefiniteMapi::IndefiniteMapi()
 {}
 
 InitFred::~InitFred(){}
-
+    
 void InitFred::processExecution(){
     bool running;
     string response;
@@ -48,7 +48,7 @@ void InitFred::processExecution(){
 
     if (request == "go"){
 
-        std::string fileName = "default.cfg";
+        /*std::string fileName = "default.cfg";
         pt::ptree tree;
 
         if (!fs::exists(fileName)) {
@@ -178,7 +178,7 @@ void InitFred::processExecution(){
         }
         catch(exception& e){
             Print::PrintError(e.what());
-        }
+        }*/
 
         sequence="reset\n";
         sequence+="0x0020000000EFFFFFCFF,write\nread\n0x0030000000E00000200,write\nread\n";

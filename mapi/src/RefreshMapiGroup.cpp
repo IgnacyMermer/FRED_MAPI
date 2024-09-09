@@ -92,7 +92,7 @@ string RefreshMapiGroup::processOutputMessage(string output){
                         float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
 
 
-                        updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
+                        //updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
                     
                     
                     }

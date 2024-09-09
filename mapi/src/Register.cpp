@@ -124,7 +124,7 @@ string Register::processOutputMessage(string output) {
         float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
         uint32_t tempValue = std::stoll(value.substr(2,6), nullptr, 16);
         float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
-        updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
+        //updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
     }
     else if(endpoint.find("DELAY_A")!=string::npos||endpoint.find("DELAY_C")!=string::npos){
         finalValue = stoi(value, nullptr, 16);
