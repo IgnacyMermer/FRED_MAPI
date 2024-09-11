@@ -25,7 +25,7 @@ class SwtSequence
         Return:
             - Reference to itself
     */
-    SwtSequence& addOperation(Operation type, uint32_t address, uint32_t* data = nullptr, bool expectResponse=true);
+    SwtSequence& addOperation(Operation type, uint32_t address, const uint32_t* data = nullptr, bool expectResponse=true);
     /*  
         Adds operation to sequence.
         Arguments:
@@ -36,19 +36,27 @@ class SwtSequence
         Return:
             - Reference to itself   
     */
-    SwtSequence& addOperation(Operation type, const char* address, uint32_t* data = nullptr, bool expectResponse=true);
+    SwtSequence& addOperation(Operation type, const char* address, const uint32_t* data = nullptr, bool expectResponse=true);
 
     /* 
         Returns stored sequence */
     const std::string& getSequence() const { return m_buffer; }
 
     /*
+        Creates mask for RMW bits operation */
+    static void createMask(uint32_t firtBit, uint32_t lastBit, uint32_t value, uint32_t* dest);
+
+    /*
+        Creates mask in an internal buffer and returns pointer to it. */
+    const uint32_t* passMask(uint32_t firtBit, uint32_t lastBit, uint32_t value);
+
+    /*
         Translate word to hex format */
-    std::string wordToHex(uint32_t word);
+    static std::string wordToHex(uint32_t word);
 
     /*
         Translate half byte to hex format. Inline.*/
-    char halfByteToHex(uint8_t halfByte)
+    static char halfByteToHex(uint8_t halfByte)
     {
         switch (halfByte) {
         case 0:
@@ -118,6 +126,10 @@ class SwtSequence
     /*
         Stors sequence in the ALF-ready format*/
     std::string m_buffer;
+
+    /*
+        Buffer for RMW bits mask. Used by passMask  */
+    uint32_t m_mask[2];
     
 };
 }// fit_swt
