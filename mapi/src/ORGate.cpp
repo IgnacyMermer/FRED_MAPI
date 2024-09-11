@@ -12,47 +12,41 @@
 #include <iomanip>
 #include "swtCreator.h"
 #include <cmath>
+#include "WinccMessage.h"
+#include "wordsUtility.h"
 
-ORGate::ORGate(string endpointParam) {
-  finalValue = 0;
-  endpoint=endpointParam;
-}
+
+ORGate::ORGate(string endpoint, string address):endpoint(endpoint), address(address), finalValue(0) { }
 
 string ORGate::processInputMessage(string input) {
-    vector<string> parameters = Utility::splitString(input, ",");
-    if(input==""||input=="set"||(parameters.size()>1&&parameters[1]=="0")){
-        if(endpoint=="A0"){
-            sequence="reset\n0x0000000020000000000,write\nread";
-        }
-        else if(endpoint=="C0"){
-            sequence="reset\n0x0000000160000000000,write\nread";
-        }
-    }
-    else if(parameters.size()>1&&parameters[1]=="1"){
-        std::stringstream ss;
-        ss << std::hex << SwtCreator::parameterValue(parameters[0]);
-        std::string hex_str = ss.str();
-        if(hex_str.length()>8){
-            hex_str=hex_str.substr(hex_str.length()-4);
-        }
-        std::string data="";
-        for(int i=0; i<8-hex_str.length(); i++){
-            data+="0";
-        }
-        data+=hex_str;
-        if(endpoint=="A0"){
-            sequence="reset\n0x000000002,"+data+"write\nread";
-        }
-        else if(endpoint=="C0"){
-            sequence="reset\n0x000000016"+data+",write\nread";
-        }
-    }
-    else{
-        sequence="";
+
+    if(WordsUtility::mapiMessage(input)){
+        this->publishAnswer(input.substr(5));
         noRpcRequest=true;
-        this->publishError("Wrong parameters");   
+        return "0";
     }
-    return sequence;
+
+    WinccMessage messageFromWinCC(input);
+
+    //read input message    
+    if (messageFromWinCC.readMessage()){
+        SwtCreator::sequenceOperationRead(address, sequence);
+        return sequence;
+    }
+    //write value on register input message
+    else if(messageFromWinCC.writeMessage()){
+        int64_t value = messageFromWinCC.getValueWriteMessage();
+        bool isSigned=false;
+        if(value>=0&&value<=255){
+            SwtCreator::sequenceOperationWrite(value, address, sequence);
+            return sequence;
+        }
+        else{
+            noRpcRequest=true;
+            this->publishError("Value out of correct range");
+            return "";
+        }
+    }
 }
 
 

@@ -9,9 +9,12 @@
 #include <cmath>
 #include "swtCreator.h"
 #include "wordsUtility.h"
+#include "tcmValues.h"
 #include <bitset>
+#include "WinccMessage.h"
 
-Register::Register(std::string endpoint, std::string address):endpoint(endpoint), finalValue(0), address(address) {}
+Register::Register(std::string endpoint, std::string address, std::vector<std::vector<int64_t>> words, std::pair<std::string, std::string> equation)
+:endpoint(endpoint), finalValue(0), address(address), words(words), equation(equation) {}
 
 string Register::processInputMessage(string input) {
 
@@ -22,22 +25,22 @@ string Register::processInputMessage(string input) {
         return "0";
     }
 
-    vector<string> parameters = Utility::splitString(input, ",");
+    WinccMessage messageFromWinCC(input);
 
-    //read input message
-    if (WordsUtility::readMessage(parameters)){
+    //read input message    
+    if (messageFromWinCC.readMessage()){
         SwtCreator::sequenceOperationRead(address, sequence);
         return sequence;
     }
     //write value on register input message
-    else if(WordsUtility::writeMessage(parameters)){
-        int64_t num = SwtCreator::parameterValue(parameters[0]);
+    else if(messageFromWinCC.writeMessage()){
+        int64_t value = messageFromWinCC.getValueWriteMessage();
         bool isSigned=false;
-        if(WordsUtility::checkValueWords(endpoint, num, isSigned)){
-            if(isSigned&&num<0){
-                num=~((num*(-1))-1);
+        if(WordsUtility::checkValueWords(endpoint, value, isSigned, words)){
+            if(isSigned&&value<0){
+                value=~((value*(-1))-1);
             }
-            SwtCreator::sequenceOperationWrite(num, address, sequence);
+            SwtCreator::sequenceOperationWrite(value, address, sequence);
             return sequence;
         }
         else{
@@ -47,19 +50,18 @@ string Register::processInputMessage(string input) {
         }
     }
     //write value on specific bits in register
-    else if(WordsUtility::writeWordMessage(parameters)){
-        int64_t index = SwtCreator::parameterValue(parameters[0]);
-        int64_t num = SwtCreator::parameterValue(parameters[2]);
+    else if(messageFromWinCC.writeWordMessage()){
+        int64_t index = messageFromWinCC.getIndexAndOrWriteMessage();
+        int64_t value = messageFromWinCC.getValueWriteWordMessage();
         bool isSigned=false;
         int firstBit=0, lastBit=0;
-        if(WordsUtility::findCheckWord(endpoint, num, index, isSigned, firstBit, lastBit)){
+        if(WordsUtility::findCheckWord(endpoint, value, index, isSigned, firstBit, lastBit, words)){
             uint32_t mask = ~(((1ULL<<(lastBit-firstBit+1))-1)<<firstBit);
-            if(isSigned&&num<0){
-                num=~((num*(-1))-1);
-                Print::PrintInfo(std::to_string(num));
+            if(isSigned&&value<0){
+                value=~((value*(-1))-1);
+                Print::PrintInfo(std::to_string(value));
             }
-            SwtCreator::sequenceOperationBits(num, firstBit, mask, address, sequence);
-            Print::PrintInfo(sequence);
+            SwtCreator::sequenceOperationBits(value, firstBit, mask, address, sequence);
             return sequence;
         }
         else{
@@ -69,16 +71,15 @@ string Register::processInputMessage(string input) {
         }
     }
     //set or clear one bit
-    else if(WordsUtility::orAndMessage(parameters)){
-        int64_t num = SwtCreator::parameterValue(parameters[0]);
-        if(WordsUtility::checkWord(endpoint, num)){
-            if(parameters[1]=="2"){
-                SwtCreator::sequenceOperationRMWAND(num, address, sequence);
+    else if(messageFromWinCC.orAndMessage()){
+        int64_t index = messageFromWinCC.getIndexAndOrWriteMessage();
+        if(WordsUtility::checkWord(endpoint, index, words)){
+            if(messageFromWinCC.orMessage()){
+                SwtCreator::sequenceOperationRMWAND(index, address, sequence);
             }
             else{
-                SwtCreator::sequenceOperationRMWOR(num, address, sequence);
+                SwtCreator::sequenceOperationRMWOR(index, address, sequence);
             }
-            Print::PrintInfo(sequence);
             return sequence;
         }
         else{
@@ -96,50 +97,29 @@ string Register::processOutputMessage(string output) {
     output.erase(remove(output.begin(), output.end(), '\n'), output.end());
     value = output.substr(output.size() - 8, output.size());
     finalValue = stoll(value, nullptr, 16);
-    if(tcm.tcmEquations[endpoint].first!=""){
-        std::string equation = tcm.tcmEquations[endpoint].first;
-        std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[endpoint].second,";");
-        std::vector<double> values = std::vector<double>{finalValue};
-        return std::to_string(Utility::calculateEquation(equation,paramNames,values));
+
+    if(equation.first!=""){
+        //check if there is only one word and if it is signed
+        if(words.size()==1&&words[0][3]==1){
+            if (finalValue > 10000) {
+                int16_t x = stoi(value, nullptr, 16);
+                finalValue=-(~x+1);
+            }
+        }
+        
+        std::vector<std::string> paramNames = Utility::splitString(equation.second,";");
+        std::vector<double> values = std::vector<double>{(double)finalValue};
+        
+        if(paramNames.size()>1&&paramNames[1]=="systemClock"){
+            values.push_back(tcm.act.externalClock?40.0789658:40.);
+        }
+        return std::to_string(Utility::calculateEquation(equation.first,paramNames,values));
     }
+
     else if(endpoint.find("AVERAGE_TIME")!=string::npos){
         return "";
     }
-    else if(endpoint.find("LASER_DELAY")!=string::npos){
-        float tempValue = stoi(value, nullptr, 16);
-        if (tempValue > 10000) {
-            int16_t x = stoi(value, nullptr, 16);
-            tempValue=-(~x+1);
-        }
-        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-        float halfBC_ns = 500. / systemClock_MHz;
-        float phaseStep_ns = halfBC_ns / 
-        //(SERIAL_NUM ? 
-        1024 ; 
-        //: 1280);
-        tempValue = tempValue*phaseStep_ns;
-        return std::to_string(tempValue);
-    }
-    else if(endpoint.find("LASER_DIVIDER")!=string::npos){
-        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-        uint32_t tempValue = std::stoll(value.substr(2,6), nullptr, 16);
-        float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
-        //updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
-    }
-    else if(endpoint.find("DELAY_A")!=string::npos||endpoint.find("DELAY_C")!=string::npos){
-        finalValue = stoi(value, nullptr, 16);
-        if (finalValue > 10000) {
-            int16_t x = stoi(value, nullptr, 16);
-            finalValue=-(~x+1);
-        }
-        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-        float halfBC_ns = 500. / systemClock_MHz;
-        float phaseStep_ns = halfBC_ns / 
-        //(SERIAL_NUM ? 
-        1024 ; 
-        //: 1280);
-        return std::to_string(finalValue*phaseStep_ns);
-    }
+    
     else if(endpoint.find("BOARD_TYPE")!=string::npos){
         value = output.substr(output.size() - 4, output.size());
         int boardBits = stoi(value, nullptr, 16);

@@ -2,11 +2,11 @@
 
 class ORGate: public Mapi{
 public:
-    ORGate(string endpointParam);
+    ORGate(string endpoint, string address);
 
     string processInputMessage(string input);
     string processOutputMessage(string output);
 
     int finalValue;
-    string sequence, endpoint;
+    string sequence, endpoint, address;
 };

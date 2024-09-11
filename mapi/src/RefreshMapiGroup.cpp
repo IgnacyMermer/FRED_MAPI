@@ -66,48 +66,19 @@ string RefreshMapiGroup::processOutputMessage(string output){
                 if(updateService){
                     std::string returnValue = std::to_string(hexValue);
                     if(tcm.tcmEquations[refreshServices[count].second.substr(4)].first!=""){
+                        if(tcm.tcmWords[refreshServices[count].second.substr(4)].size()==1&&tcm.tcmWords[refreshServices[count].second.substr(4)][0][3]==1){
+                            if (hexValue > 50000) {
+                                int16_t x = stoi(value, nullptr, 16);
+                                hexValue=-(~x+1);
+                            }
+                        }
                         std::string equation = tcm.tcmEquations[refreshServices[count].second.substr(4)].first;
                         std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[refreshServices[count].second.substr(4)].second,";");
-                        std::vector<double> values = std::vector<double>{hexValue};
+                        std::vector<double> values = std::vector<double>{(double)hexValue};
+                        if(paramNames.size()>1&&paramNames[1]=="systemClock"){
+                            values.push_back(tcm.act.externalClock?40.0789658:40.);
+                        }
                         returnValue = std::to_string(Utility::calculateEquation(equation,paramNames,values));
-                    }
-                    else if(refreshServices[count].second.find("LASER_DELAY")!=string::npos){
-                        float tempValue = stoi(value, nullptr, 16);
-                        if (tempValue > 10000) {
-                            int16_t x = stoi(value, nullptr, 16);
-                            tempValue=-(~x+1);
-                        }
-                        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-                        float halfBC_ns = 500. / systemClock_MHz;
-                        float phaseStep_ns = halfBC_ns / 
-                        //(SERIAL_NUM ? 
-                        1024 ; 
-                        //: 1280);
-                        tempValue = tempValue*phaseStep_ns;
-                        returnValue = std::to_string(tempValue);
-                    }
-                    else if(refreshServices[count].second.find("LASER_DIVIDER")!=string::npos||refreshServices[count].second.find("LASER_FREQUENCY")!=string::npos){
-                        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-                        uint32_t tempValue = std::stoll(value.substr(2,6), nullptr, 16);
-                        float laserFrequency = systemClock_MHz*std::pow(10,6)/(tempValue==0?1<<24:tempValue);
-
-
-                        //updateTopicAnswer("READOUTCARDS/TCM0/LASER_FREQUENCY", std::to_string(laserFrequency));
-                    
-                    
-                    }
-                    else if(refreshServices[count].second.find("DELAY_A")!=string::npos||refreshServices[count].second.find("DELAY_C")!=string::npos){
-                        if (hexValue > 10000) {
-                            int16_t x = stoi(value, nullptr, 16);
-                            hexValue=-(~x+1);
-                        }
-                        float systemClock_MHz = tcm.act.externalClock?40.0789658:40.;
-                        float halfBC_ns = 500. / systemClock_MHz;
-                        float phaseStep_ns = halfBC_ns / 
-                        //(SERIAL_NUM ? 
-                        1024 ; 
-                        //: 1280);
-                        returnValue = std::to_string(hexValue*phaseStep_ns);
                     }
                     requests.push_back(make_pair(refreshServices[count].second, "FRED,"+returnValue));                    
                 }
