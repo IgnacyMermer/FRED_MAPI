@@ -29,7 +29,7 @@ string Register::processInputMessage(string input) {
 
     //read input message    
     if (messageFromWinCC.readMessage()){
-        SwtCreator::sequenceOperationRead(address, sequence);
+        SwtCreator::sequenceOperationRead(address, sequence, false);
         return sequence;
     }
     //write value on register input message
@@ -40,7 +40,7 @@ string Register::processInputMessage(string input) {
             if(isSigned&&value<0){
                 value=~((value*(-1))-1);
             }
-            SwtCreator::sequenceOperationWrite(value, address, sequence);
+            SwtCreator::sequenceOperationWrite(value, address, sequence, false);
             return sequence;
         }
         else{
@@ -61,7 +61,7 @@ string Register::processInputMessage(string input) {
                 value=~((value*(-1))-1);
                 Print::PrintInfo(std::to_string(value));
             }
-            SwtCreator::sequenceOperationBits(value, firstBit, mask, address, sequence);
+            SwtCreator::sequenceOperationBits(value, firstBit, mask, address, sequence, false);
             return sequence;
         }
         else{
@@ -75,10 +75,10 @@ string Register::processInputMessage(string input) {
         int64_t index = messageFromWinCC.getIndexAndOrWriteMessage();
         if(WordsUtility::checkWord(endpoint, index, words)){
             if(messageFromWinCC.orMessage()){
-                SwtCreator::sequenceOperationRMWAND(index, address, sequence);
+                SwtCreator::sequenceOperationRMWAND(index, address, sequence, false);
             }
             else{
-                SwtCreator::sequenceOperationRMWOR(index, address, sequence);
+                SwtCreator::sequenceOperationRMWOR(index, address, sequence, false);
             }
             return sequence;
         }

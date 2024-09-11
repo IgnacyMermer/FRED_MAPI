@@ -6,11 +6,14 @@ class SwtCreator{
 public:
     SwtCreator();
 
-    static void sequenceOperationRead(std::string address, std::string& sequence){
-        sequence = "reset\n0x000"+address+"00000000,write\nread";
+    static void sequenceOperationRead(std::string address, std::string& sequence, bool inLoop=true){
+        if(!inLoop){
+            sequence="reset";
+        }
+        sequence += "\n0x000"+address+"00000000,write\nread";
     }
 
-    static void sequenceOperationWrite(int64_t num, std::string address, std::string& sequence){
+    static void sequenceOperationWrite(int64_t num, std::string address, std::string& sequence, bool inLoop=true){
         std::stringstream ss;
         ss << std::hex << num;
         std::string hex_str = ss.str();
@@ -22,19 +25,25 @@ public:
             data+="0";
         }
         data+=hex_str;
-        sequence="reset\n0x001"+address+data+",write\nread";
+        if(!inLoop){
+            sequence="reset";
+        }
+        sequence+="\n0x001"+address+data+",write\nread";
     }
 
-    static void sequenceOperationRMWAND(int num, std::string address, std::string& sequence){
+    static void sequenceOperationRMWAND(int num, std::string address, std::string& sequence, bool inLoop=true){
         int temp = 0xFFFFFFFF;
         temp-=(1 << num);
         std::stringstream ss;
         ss << std::hex << temp;
         std::string data = ss.str();
-        sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
+        if(!inLoop){
+            sequence="reset";
+        }
+        sequence += "\n0x002"+address+data+",write\nread\n0x003"+address+"00000000,write\nread\n0x000"+address+"00000000,write\nread";
     }
 
-    static void sequenceOperationRMWOR(int num, std::string address, std::string& sequence){
+    static void sequenceOperationRMWOR(int num, std::string address, std::string& sequence, bool inLoop=true){
         std::stringstream ss;
         ss << std::hex << (1 << num);
         std::string hex_str = ss.str();
@@ -43,10 +52,13 @@ public:
             data+="0";
         }
         data+=hex_str;
-        sequence = "reset\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread\n0x000"+address+"00000000,write\nread";
+        if(!inLoop){
+            sequence="reset";
+        }
+        sequence += "\n0x002"+address+"FFFFFFFF,write\nread\n0x003"+address+data+",write\nread\n0x000"+address+"00000000,write\nread";
     }
 
-    static void sequenceOperationBits(int64_t num, uint8_t power, uint32_t maskNumber, std::string address, std::string& sequence){
+    static void sequenceOperationBits(int64_t num, uint8_t power, uint32_t maskNumber, std::string address, std::string& sequence, bool inLoop=true){
         std::stringstream ss;
         ss << std::hex << maskNumber;
         std::string hex_str = ss.str();
@@ -69,7 +81,10 @@ public:
             data2+="0";
         }
         data2+=hex_str;
-        sequence = "reset\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
+        if(!inLoop){
+            sequence="reset";
+        }
+        sequence += "\n0x002"+address+data+",write\nread\n0x003"+address+data2+",write\nread\n0x000"+address+"00000000,write\nread";
     }
 
     static int64_t parameterValue(std::string strValue){

@@ -30,7 +30,7 @@ string ORGate::processInputMessage(string input) {
 
     //read input message    
     if (messageFromWinCC.readMessage()){
-        SwtCreator::sequenceOperationRead(address, sequence);
+        SwtCreator::sequenceOperationRead(address, sequence, false);
         return sequence;
     }
     //write value on register input message
@@ -38,7 +38,7 @@ string ORGate::processInputMessage(string input) {
         int64_t value = messageFromWinCC.getValueWriteMessage();
         bool isSigned=false;
         if(value>=0&&value<=255){
-            SwtCreator::sequenceOperationWrite(value, address, sequence);
+            SwtCreator::sequenceOperationWrite(value, address, sequence, false);
             return sequence;
         }
         else{
