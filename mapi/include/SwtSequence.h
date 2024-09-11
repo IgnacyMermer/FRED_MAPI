@@ -98,8 +98,6 @@ class SwtSequence
         CRU special word, appended to sequence if response to current operation (one SWT frame) is expected */
     static constexpr const const char* _READ_WORD_ = "read\n";
     /* 
-        Length of SWT fram in the hex format    */
-    static constexpr const size_t _SWT_FRAME_LEN_ = 21;
 
     /*
         FIT SWT specific, marks read operation  */
@@ -116,13 +114,6 @@ class SwtSequence
     /*
         FIT SWT specific, marks RMW sum operation   */
     static constexpr const const char* _RMW_SUM_PREFIX_ = "0x004";
-
-    /* Length of the operation prefix in the hex format
-    */
-    static constexpr const size_t _PREFIX_LEN_ = 5;
-    /* 
-        Length of the 32 bit word in the hex format */
-    static constexpr const size_t _WORD_LEN_ = 8;
 
     /*
         Stors sequence in the ALF-ready format*/
