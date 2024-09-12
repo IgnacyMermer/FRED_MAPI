@@ -98,33 +98,33 @@ class SwtSequence
 
     /*
         Prefix addded at the begging of every sequence  */
-    static constexpr const const char* _SEQUENCE_PREFIX_ = "reset";
+    static constexpr const char* _SEQUENCE_PREFIX_ = "reset";
     /* 
         CRU special word, appended to every SWT frame   */
-    static constexpr const const char* _FRAME_POSTFIX_ = ",write\n";
+    static constexpr const char* _FRAME_POSTFIX_ = ",write\n";
     /* 
         CRU special word, appended to sequence if response to current operation (one SWT frame) is expected */
-    static constexpr const const char* _READ_WORD_ = "read\n";
+    static constexpr const char* _READ_WORD_ = "read\n";
     /* 
 
     /*
         FIT SWT specific, marks read operation  */
-    static constexpr const const char* _READ_PREFIX_ = "0x000";
+    static constexpr const char* _READ_PREFIX_ = "0x000";
     /*
         FIT SWT specific, marks write operation */
-    static constexpr const const char* _WRITE_PREFIX_ = "0x001";
+    static constexpr const char* _WRITE_PREFIX_ = "0x001";
     /*
         FIT SWT specific, marks AND frame in RMW bits operation */
-    static constexpr const const char* _RMW_BITS_AND_PREFIX_ = "0x002";
+    static constexpr const char* _RMW_BITS_AND_PREFIX_ = "0x002";
     /*
         FIT SWT specific, marks OR frame in RMW bits operation  */
-    static constexpr const const char* _RMW_BITS_OR_PREFIX_ = "0x003";
+    static constexpr const char* _RMW_BITS_OR_PREFIX_ = "0x003";
     /*
         FIT SWT specific, marks RMW sum operation   */
-    static constexpr const const char* _RMW_SUM_PREFIX_ = "0x004";
+    static constexpr const char* _RMW_SUM_PREFIX_ = "0x004";
 
     private:
-    
+
     /*
         Stors sequence in the ALF-ready format*/
     std::string m_buffer;

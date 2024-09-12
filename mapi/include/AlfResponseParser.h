@@ -1,6 +1,8 @@
 #include<cstdint>
 #include<list>
 #include<algorithm>
+#include<optional>
+#include<cstring>
 
 
 class AlfResponseParser
@@ -20,10 +22,9 @@ class AlfResponseParser
     struct Line
     {
         Line() = default;
-        Line(Line::Type type): type(type) {}
         Line(const char* hex, int64_t len);
 
-        enum class Type {ResponseToRead, ResponseToWrite, Invalid} type;
+        enum class Type {ResponseToRead, ResponseToWrite} type;
         SwtFrame frame;
         int64_t length;
     };
@@ -31,6 +32,7 @@ class AlfResponseParser
     class iterator                                     
     {
         public:
+        bool operator!=(const iterator& itr);
         iterator& operator++();
         iterator operator++(int) const;
         Line operator*() const;
@@ -40,12 +42,12 @@ class AlfResponseParser
         private:
 
         int64_t getLineLen() const;
-
+        
         const char* m_sequence;
-        Line m_currentLine;
+        std::optional<Line> m_currentLine;
     };
     
-    AlfResponseParser(const char* response): m_sequence(response) {}
+    AlfResponseParser(const char* response): m_sequence(response), m_sequenceLen(strlen(response)) {}
 
     iterator begin();
     iterator end();
@@ -55,7 +57,9 @@ class AlfResponseParser
     static constexpr const int64_t _SWT_LEN_ = 21;
 
     private:
+
     const char* m_sequence;
+    int64_t m_sequenceLen;
 
 };
 
