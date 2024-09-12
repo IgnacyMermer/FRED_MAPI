@@ -94,7 +94,7 @@ class SwtSequence
         }
     }
 
-    private:
+    
 
     /*
         Prefix addded at the begging of every sequence  */
@@ -123,6 +123,8 @@ class SwtSequence
         FIT SWT specific, marks RMW sum operation   */
     static constexpr const const char* _RMW_SUM_PREFIX_ = "0x004";
 
+    private:
+    
     /*
         Stors sequence in the ALF-ready format*/
     std::string m_buffer;
