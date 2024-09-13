@@ -144,4 +144,16 @@ public:
             }
         }
     }
+
+    static std::string create8CharHex(uint32_t num){
+        std::stringstream ss;
+        ss << std::hex << num;
+        std::string hex_str = ss.str();
+        std::string data="";
+        for(int i=0; i<8-hex_str.length(); i++){
+            data+="0";
+        }
+        data+=hex_str;
+        return data;
+    }
 };

@@ -5,7 +5,7 @@
 #include "ElectronicStatus.h"
 #include "Alfred/print.h"
 #include "Parser/utility.h"
-#include "tcmValues.h"
+#include "registerData.h"
 #include <sstream>
 
 
@@ -28,13 +28,13 @@ void ElectronicStatus::processExecution(){
     }
 
     if (request == ""||(parameters.size()>1&&parameters[1]=="0")){
-        this->publishAnswer(std::to_string(tcm.temp.electronicStatus));
+        this->publishAnswer(std::to_string(registersData.temp.electronicStatus));
     }
     else if (request == "error"){
         this->publishError("Error!");
     }
     else if(parameters.size()>1&&parameters[1]=="1"){
-        tcm.temp.electronicStatus = std::stoi(parameters[0]);
+        registersData.temp.electronicStatus = std::stoi(parameters[0]);
         this->publishAnswer(parameters[0]);
     }
 }

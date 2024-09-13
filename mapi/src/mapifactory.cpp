@@ -8,7 +8,7 @@
 #include "ElectronicStatus.h"
 #include "ResetErrors.h"
 #include "InitElectronics.h"
-#include "tcmValues.h"
+#include "registerData.h"
 #include "wordsUtility.h"
 #include "HistogramReader.h"
 #include "RefreshMapiPMGroup.h"
@@ -44,6 +44,8 @@ MapiFactory::~MapiFactory(){
 **/
 void MapiFactory::generateObjects(){
 
+    Print::PrintInfo("start");
+
     std::string serviceName="";
 
     std::vector<std::pair<std::string, std::string>> refreshServicesTCM;
@@ -65,56 +67,56 @@ void MapiFactory::generateObjects(){
             std::pair<std::string, std::string> TCMaddress("", "");
             std::vector<std::pair<std::string, std::string>> PMaddresses;
             for(vector<MultiBase*> rowDevice : devicesResult){
-                if(rowDevice[3]->getInt()==1){
-                    TCMaddress.first=rowDevice[2]->getString();
-                    TCMaddress.second=rowDevice[1]->getString();
+                if(rowDevice[2]->getInt()==1){
+                    TCMaddress.first=rowDevice[1]->getString();
+                    TCMaddress.second=rowDevice[0]->getString();
                 }
                 else{
-                    PMaddresses.emplace_back(rowDevice[2]->getString(), rowDevice[1]->getString());
+                    PMaddresses.emplace_back(rowDevice[1]->getString(), rowDevice[0]->getString());
                 }
             }
 
             Register* registerMapi = nullptr;
             //get from db register addresses with services names 
-            vector<vector<MultiBase*> > registerResult = db->executeQuery("SELECT addresses.* FROM DEVICE_ADDRESSES addresses", status);
-            
+            vector<vector<MultiBase*> > registerResult = db->executeQuery("SELECT * FROM REGISTERS", status);
             if(status){
                 std::string previousDeviceName="";
                 for(vector<MultiBase*> row : registerResult){
+
+                    //is_tcm()
                     if(row[1]->getInt()==1){
                         int wordCount=0;
                         serviceName = "READOUTCARDS/TCM0/"+row[3]->getString();
                         vector<vector<MultiBase*> > addressResult = db->executeQuery("SELECT words.* FROM DEVICE_ADDRESSES_WORDS words WHERE words.DEVICE_ADDRESS_ID="
                             +std::to_string(row[0]->getInt()), status);
-
                         bool firstIterationAddress = true;
                         for(vector<MultiBase*> rowAddress : addressResult){
                             //save locally register words for comparing values and allow WinCC for specific operations on registers
                             if(firstIterationAddress){
                                 firstIterationAddress=false;
-                                tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
+                                registersData.registerFields[serviceName]=std::vector<std::vector<int64_t>>();
                             }
                             
-                            tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
+                            registersData.registerFields[serviceName].push_back(std::vector<int64_t>());
                             
                             for(int i=1; i<8; i++){
-                                tcm.tcmWords[serviceName][wordCount].push_back((rowAddress[i]->getInt()));
+                                registersData.registerFields[serviceName][wordCount].push_back((rowAddress[i]->getInt()));
                             }
 
                             //if register have specific equations with passed values from WinCC, save locally equation with variables names
                             if(rowAddress[9]->getString()!="-"){
-                                tcm.tcmEquations[serviceName]=std::make_pair(rowAddress[8]->getString(), rowAddress[9]->getString());
+                                registersData.equations[serviceName]=std::make_pair(rowAddress[8]->getString(), rowAddress[9]->getString());
                             }   
                             
                             wordCount++;
                         }
 
                         // add service to MAPI
-                        registerMapi = new Register(serviceName, "000000"+row[2]->getString(), tcm.tcmWords[serviceName], tcm.tcmEquations[serviceName]);
+                        registerMapi = new Register(serviceName, "000000"+row[2]->getString(), registersData.registerFields[serviceName], registersData.equations[serviceName]);
                         this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
                         this->mapiObjects.push_back(registerMapi);
                         // save locally address of DIM service 
-                        tcm.addresses[serviceName]="00"+row[2]->getString();
+                        registersData.addresses[serviceName]="00"+row[2]->getString();
                         // if service must be refresh we save it to specific local refresh array
 
                         switch(row[4]->getInt()){
@@ -138,29 +140,29 @@ void MapiFactory::generateObjects(){
                                 //save locally register words for comparing values and allow WinCC for specific operations on registers
                                 if(firstIterationAddress){
                                     firstIterationAddress=false;
-                                    tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
+                                    registersData.registerFields[serviceName]=std::vector<std::vector<int64_t>>();
                                 }
                                 
-                                tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
+                                registersData.registerFields[serviceName].push_back(std::vector<int64_t>());
                                 
                                 for(int i=1; i<8; i++){
-                                    tcm.tcmWords[serviceName][wordCount].push_back((rowAddress[i]->getInt()));
+                                    registersData.registerFields[serviceName][wordCount].push_back((rowAddress[i]->getInt()));
                                 }
 
                                 //if register have specific equations with passed values from WinCC, save locally equation with variables names
                                 if(rowAddress[9]->getString()!="-"){
-                                    tcm.tcmEquations[serviceName]=std::make_pair(rowAddress[8]->getString(), rowAddress[9]->getString());
-                                }   
+                                    registersData.equations[serviceName]=std::make_pair(rowAddress[8]->getString(), rowAddress[9]->getString());
+                                }
                                 
                                 wordCount++;
                             }
 
                             // add service to MAPI
-                            registerMapi = new Register(serviceName, "0000"+device.first+row[2]->getString(), tcm.tcmWords[serviceName], tcm.tcmEquations[serviceName]);
+                            registerMapi = new Register(serviceName, "0000"+device.first+row[2]->getString(), registersData.registerFields[serviceName], registersData.equations[serviceName]);
                             this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
                             this->mapiObjects.push_back(registerMapi);
                             // save locally address of DIM service 
-                            tcm.addresses[serviceName]=device.first+row[2]->getString();
+                            registersData.addresses[serviceName]=device.first+row[2]->getString();
                             // if service must be refresh we save it to specific local refresh array
 
                             switch(row[4]->getInt()){
@@ -250,27 +252,27 @@ void MapiFactory::generateObjects(){
                     if(parametersWord[1]==parameters[1]&&parametersWord[0]==parameters[0]){
                         if(previousAddress!=parameters[0]){
                             previousAddress=parameters[0];
-                            tcm.tcmWords[serviceName]=std::vector<std::vector<int64_t>>();
+                            registersData.registerFields[serviceName]=std::vector<std::vector<int64_t>>();
                         }
                         
-                        tcm.tcmWords[serviceName].push_back(std::vector<int64_t>());
+                        registersData.registerFields[serviceName].push_back(std::vector<int64_t>());
                         
                         for(int i=2; i<8; i++){
-                            tcm.tcmWords[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
+                            registersData.registerFields[serviceName][wordCount].push_back(std::stoll(parametersWord[i]));
                         }
                         
                         if(parametersWord.size()>10&&parametersWord[10]!="-"){
-                            tcm.tcmEquations[serviceName]=std::make_pair(parametersWord[9], parametersWord[10]);
+                            registersData.equations[serviceName]=std::make_pair(parametersWord[9], parametersWord[10]);
                         }                
                         
                         wordCount++;
                     }
                 }
-                registerMapi = new Register(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0], tcm.tcmWords[serviceName], tcm.tcmEquations[serviceName]);
+                registerMapi = new Register(serviceName, "0000"+devicesAddresses[parameters[1]]+parameters[0], registersData.registerFields[serviceName], registersData.equations[serviceName]);
                 this->fred->registerMapiObject(fred->Name()+"/"+serviceName, registerMapi);
                 this->mapiObjects.push_back(registerMapi);
 
-                tcm.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0];
+                registersData.addresses[serviceName]=devicesAddresses[parameters[1]]+parameters[0];
                 int refreshServicesId = std::stoi(parameters[2]);
                 switch(refreshServicesId){
                     case 1:

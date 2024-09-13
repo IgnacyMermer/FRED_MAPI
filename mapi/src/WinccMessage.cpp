@@ -5,6 +5,11 @@
 
 WinccMessage::WinccMessage(std::string input) : parameters(Utility::splitString(input, ",")) {}
 
+//read - READ
+//write - WRITE,,(value)
+//write word on bits - WRITE,(field_name),(value)
+
+
 bool WinccMessage::readMessage() const {
     return (parameters.size()>1&&parameters[1]=="0")||parameters[0]=="read";
 }

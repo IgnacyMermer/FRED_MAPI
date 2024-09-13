@@ -9,7 +9,7 @@
 #include <cmath>
 #include "swtCreator.h"
 #include "wordsUtility.h"
-#include "tcmValues.h"
+#include "registerData.h"
 #include <bitset>
 #include "WinccMessage.h"
 
@@ -111,7 +111,7 @@ string Register::processOutputMessage(string output) {
         std::vector<double> values = std::vector<double>{(double)finalValue};
         
         if(paramNames.size()>1&&paramNames[1]=="systemClock"){
-            values.push_back(tcm.act.externalClock?40.0789658:40.);
+            values.push_back(registersData.act.externalClock?40.0789658:40.);
         }
         return std::to_string(Utility::calculateEquation(equation.first,paramNames,values));
     }
@@ -124,7 +124,7 @@ string Register::processOutputMessage(string output) {
         value = output.substr(output.size() - 4, output.size());
         int boardBits = stoi(value, nullptr, 16);
         int boardSerialNr = ((boardBits>>8)&0xFF);
-        tcm.act.SERIAL_NUM=boardSerialNr;
+        registersData.act.SERIAL_NUM=boardSerialNr;
     }
     noReturn=false;
   }

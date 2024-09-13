@@ -5,7 +5,7 @@
 #include "RefreshMapiGroup.h"
 #include "Parser/utility.h"
 #include "Alfred/print.h"
-#include "tcmValues.h"
+#include "registerData.h"
 #include "swtCreator.h"
 
 
@@ -65,18 +65,18 @@ string RefreshMapiGroup::processOutputMessage(string output){
 
                 if(updateService){
                     std::string returnValue = std::to_string(hexValue);
-                    if(tcm.tcmEquations[refreshServices[count].second.substr(4)].first!=""){
-                        if(tcm.tcmWords[refreshServices[count].second.substr(4)].size()==1&&tcm.tcmWords[refreshServices[count].second.substr(4)][0][3]==1){
+                    if(registersData.equations[refreshServices[count].second.substr(4)].first!=""){
+                        if(registersData.registerFields[refreshServices[count].second.substr(4)].size()==1&&registersData.registerFields[refreshServices[count].second.substr(4)][0][3]==1){
                             if (hexValue > 50000) {
                                 int16_t x = stoi(value, nullptr, 16);
                                 hexValue=-(~x+1);
                             }
                         }
-                        std::string equation = tcm.tcmEquations[refreshServices[count].second.substr(4)].first;
-                        std::vector<std::string> paramNames = Utility::splitString(tcm.tcmEquations[refreshServices[count].second.substr(4)].second,";");
+                        std::string equation = registersData.equations[refreshServices[count].second.substr(4)].first;
+                        std::vector<std::string> paramNames = Utility::splitString(registersData.equations[refreshServices[count].second.substr(4)].second,";");
                         std::vector<double> values = std::vector<double>{(double)hexValue};
                         if(paramNames.size()>1&&paramNames[1]=="systemClock"){
-                            values.push_back(tcm.act.externalClock?40.0789658:40.);
+                            values.push_back(registersData.act.externalClock?40.0789658:40.);
                         }
                         returnValue = std::to_string(Utility::calculateEquation(equation,paramNames,values));
                     }

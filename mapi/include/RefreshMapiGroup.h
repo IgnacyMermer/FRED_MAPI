@@ -17,7 +17,6 @@ private:
     int64_t hexValue;
     bool firstTime;
     string sequence;
-    std::vector<std::string> services;
     std::vector<int64_t> oldValues;
     std::vector<std::pair<std::string, std::string>> refreshServices;
 };
